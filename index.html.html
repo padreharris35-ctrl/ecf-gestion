@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECF Commerce Général | Cloud</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f1f5f9; }
+        .excel-table { width: 100%; border-collapse: collapse; background: white; }
+        .excel-table th { background: #0f172a; color: white; padding: 12px; font-size: 11px; text-transform: uppercase; text-align: left; }
+        .excel-table td { border: 1px solid #e2e8f0; padding: 10px; font-size: 13px; color: #334155; }
+        .active-entity { border-bottom: 4px solid #3b82f6; color: #3b82f6 !important; font-weight: 800; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+
+    <header class="bg-[#0f172a] text-white p-4 flex justify-between items-center shadow-lg">
+        <div class="flex items-center gap-6">
+            <h1 class="text-2xl font-black italic tracking-tighter">ECF<span class="text-blue-500 text-sm ml-1 uppercase"> Commerce Général</span></h1>
+            <nav class="flex gap-4 text-[10px] font-bold text-slate-400">
+                <button onclick="switchEntity('BIOMED')" id="tab-BIOMED" class="py-2 px-1 transition-all active-entity uppercase">Matériels Biomédicaux</button>
+                <button onclick="switchEntity('BUREAU')" id="tab-BUREAU" class="py-2 px-1 transition-all uppercase">Fournitures & Informatique</button>
+            </nav>
+        </div>
+        <div id="statSolde" class="text-xl font-mono font-bold text-emerald-400">0 FCFA</div>
+    </header>
+
+    <nav class="bg-white border-b p-3 flex justify-between items-center px-6">
+        <div class="flex gap-2">
+            <button onclick="openModal('entry')" class="bg-blue-600 text-white px-4 py-2 rounded text-[11px] font-bold uppercase italic shadow-sm"><i class="fas fa-plus mr-1"></i> Saisir Flux</button>
+            <button onclick="openModalDoc('BON')" class="bg-orange-500 text-white px-4 py-2 rounded text-[11px] font-bold uppercase italic shadow-sm"><i class="fas fa-shopping-cart mr-1"></i> Bon de Commande</button>
+            <button onclick="openModalDoc('FACTURE')" class="bg-slate-800 text-white px-4 py-2 rounded text-[11px] font-bold uppercase italic shadow-sm"><i class="fas fa-file-invoice-dollar mr-1"></i> Facture Normalisée</button>
+            <button onclick="showSection('archives')" class="bg-emerald-600 text-white px-4 py-2 rounded text-[11px] font-bold uppercase italic shadow-sm"><i class="fas fa-archive mr-1"></i> Archives Documents</button>
+            <button onclick="showSection('compta')" class="bg-slate-500 text-white px-4 py-2 rounded text-[11px] font-bold uppercase italic shadow-sm">Tableau de Bord</button>
+        </div>
+        <div class="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase">
+            <span>Exercice</span>
+            <select id="filterYear" onchange="updateDocPrefix(); fetchFirebase();" class="border p-1 rounded bg-slate-50"></select>
+        </div>
+    </nav>
+
+    <main id="section-compta" class="flex-1 overflow-auto p-6">
+        <div class="border rounded-lg overflow-hidden bg-white shadow-sm">
+            <table class="excel-table">
+                <thead>
+                    <tr><th class="w-12 text-center">Réf</th><th class="w-24">Date</th><th>Opération</th><th>Tiers / Client</th><th class="w-28 text-center">Paiement</th><th class="text-right w-36">Montant (FCFA)</th><th class="w-10"></th></tr>
+                </thead>
+                <tbody id="mainBody"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <main id="section-archives" class="flex-1 overflow-auto p-6 hidden">
+        <div class="border rounded-lg overflow-hidden bg-white shadow-sm">
+            <table class="excel-table">
+                <thead>
+                    <tr><th class="w-32">N° Doc</th><th class="w-32">Date</th><th class="w-40">Type</th><th>Client</th><th class="text-right w-36">Total TTC</th><th class="w-24 text-center">Actions</th></tr>
+                </thead>
+                <tbody id="archiveBody"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <div id="modalEntry" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-[100]">
+        <div class="bg-white w-[500px] rounded-lg shadow-2xl p-6 border-t-4 border-blue-600">
+            <h3 class="font-black mb-4 uppercase text-slate-800 border-b pb-2 italic text-sm">Nouvelle Opération de Trésorerie</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <input type="text" id="f_lib" placeholder="Libellé de l'opération" class="col-span-2 border p-3 rounded text-sm outline-none">
+                <input type="text" id="f_tiers" placeholder="Tiers / Bénéficiaire" class="col-span-2 border p-3 rounded text-sm outline-none">
+                <select id="f_type" class="border p-3 rounded text-sm font-bold bg-slate-50"><option value="ENTREE">RECETTE (+)</option><option value="SORTIE">DEPENSE (-)</option></select>
+                <input type="number" id="f_mt" placeholder="Montant FCFA" class="border p-3 rounded text-sm font-bold text-blue-600">
+                <select id="f_mode" class="border p-3 rounded text-sm"><option>Espèce</option><option>Virement</option><option>Chèque</option><option>Mobile Money</option></select>
+                <input type="date" id="f_date" class="border p-3 rounded text-sm">
+                <button onclick="saveToFirebase()" class="col-span-2 bg-blue-600 text-white p-4 rounded font-bold uppercase text-[11px] shadow-lg hover:bg-blue-700">Valider l'enregistrement</button>
+                <button onclick="closeModal('entry')" class="col-span-2 text-slate-400 text-[10px] font-bold uppercase text-center mt-1">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalDoc" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-[100] backdrop-blur-sm">
+        <div class="bg-white w-[850px] max-h-[90vh] overflow-y-auto rounded-lg shadow-2xl p-6">
+            <div id="docHeaderColor" class="p-4 mb-4 text-white font-bold flex justify-between uppercase text-xs">
+                <span id="docTitle">DOCUMENT</span>
+                <button onclick="closeModal('doc')">✕</button>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Numéro de document</label>
+                    <div class="flex">
+                        <input type="text" id="doc_prefix" class="w-12 border border-r-0 p-2 rounded-l bg-slate-100 font-bold text-center" readonly>
+                        <input type="text" id="doc_suffix" maxlength="4" placeholder="0000" class="flex-1 border p-2 rounded-r font-mono font-bold text-blue-600 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Client</label>
+                    <input type="text" id="doc_client" class="w-full border p-2 rounded outline-none">
+                </div>
+            </div>
+            <div class="bg-slate-50 p-3 rounded border mb-4">
+                <table class="w-full text-xs">
+                    <thead><tr class="text-slate-400 uppercase text-[9px] border-b"><th class="text-left p-2">Désignation</th><th class="w-20 p-2 text-center">Qté</th><th class="w-32 p-2 text-right">P.U HT</th><th class="w-8"></th></tr></thead>
+                    <tbody id="itemsList"></tbody>
+                </table>
+                <button onclick="addItemLine()" class="mt-4 text-blue-600 text-[10px] font-bold uppercase">+ Ajouter un article</button>
+            </div>
+            <div class="bg-slate-900 text-white p-5 rounded-lg">
+                <div class="flex justify-between text-xs opacity-50 mb-1"><span>Total HT</span><span id="res_ht">0 FCFA</span></div>
+                <div class="flex justify-between text-xs text-blue-400 font-bold mb-3"><span>TVA (18%)</span><span id="res_tva">0 FCFA</span></div>
+                <div class="flex justify-between text-2xl font-black border-t border-slate-700 pt-3"><span>TOTAL TTC</span><span id="res_ttc">0 FCFA</span></div>
+            </div>
+            <button onclick="saveAndGeneratePDF()" id="btnGenDoc" class="w-full p-4 rounded-lg font-bold uppercase text-xs mt-4 text-white shadow-lg">Générer & Archiver</button>
+        </div>
+    </div>
+
+    <script>
+        const FIREBASE_URL = "https://ecfcommerce-b3893-default-rtdb.firebaseio.com/data.json";
+        const ARCHIVE_URL = "https://ecfcommerce-b3893-default-rtdb.firebaseio.com/archives.json";
+        const ADMIN_PASS = "ECF2026";
+        let currentEntity = "BIOMED";
+        let transactions = [];
+        let currentDocType = "BON";
+
+        const LISTE_BIOMED = ["Désodorisant 400 ml (carton)", "Anios clean excel D (bidon)", "Stéranios 2% bidon 5 L", "Surfanos", "Aseptanios AD 5 L", "Acide muriatique", "Grésil (carton)", "Gant de ménage", "Serpillères", "Raclettes", "Pelle à manche", "Balai à manche", "Balai à tête de loup", "Brousse à manche", "Brouettes", "Bottes pour les manœuvres", "Eponges végétales", "OMO sachet 1 Kg (sacs)", "Bras de robots", "Sachet de poubelle noir 100L (Paquet de 10)", "Sachet de poubelle bleu 100L (Paquet de 10)", "Sachet de poubelle noir 50L (Paquet de 10)", "Sachet de poubelle bleu 50L (Paquet de 10)"].sort();
+
+        function cleanFormat(num) { return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
+
+        function updateDocPrefix() {
+            const year = document.getElementById('filterYear').value;
+            document.getElementById('doc_prefix').value = year.toString().slice(-2);
+        }
+
+        function showSection(id) {
+            document.getElementById('section-compta').classList.toggle('hidden', id !== 'compta');
+            document.getElementById('section-archives').classList.toggle('hidden', id !== 'archives');
+            if(id === 'archives') fetchArchives();
+        }
+
+        function openModal(id) {
+            document.getElementById('modal' + id.charAt(0).toUpperCase() + id.slice(1)).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById('modal' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('hidden');
+        }
+
+        function addItemLine() {
+            const tr = document.createElement('tr');
+            tr.className = "border-b border-slate-100";
+            let inputHtml = currentEntity === "BIOMED" ? `<select class="w-full bg-transparent item-name p-2 outline-none font-bold text-slate-700 appearance-none"><option value="">-- Choisir --</option>${LISTE_BIOMED.map(m => `<option value="${m}">${m}</option>`).join('')}</select>` : `<input type="text" class="w-full bg-transparent p-2 item-name outline-none font-bold text-slate-700" placeholder="Saisir...">`;
+            tr.innerHTML = `<td class="p-1">${inputHtml}</td><td class="p-1"><input type="number" class="w-full text-center bg-transparent item-qte font-bold" value="1" oninput="calculateDoc()"></td><td class="p-1"><input type="number" class="w-full text-right bg-transparent font-bold item-pu text-blue-600" placeholder="0" oninput="calculateDoc()"></td><td class="p-1 text-center"><button onclick="this.parentElement.parentElement.remove();calculateDoc()" class="text-red-300">✕</button></td>`;
+            document.getElementById('itemsList').appendChild(tr);
+        }
+
+        function calculateDoc() {
+            let totalHT = 0;
+            const qtes = document.querySelectorAll('.item-qte'), pus = document.querySelectorAll('.item-pu');
+            qtes.forEach((_, i) => { totalHT += (parseFloat(qtes[i].value) || 0) * (parseFloat(pus[i].value) || 0); });
+            const tva = totalHT * 0.18, ttc = totalHT + tva;
+            document.getElementById('res_ht').innerText = cleanFormat(totalHT) + " FCFA";
+            document.getElementById('res_tva').innerText = cleanFormat(tva) + " FCFA";
+            document.getElementById('res_ttc').innerText = cleanFormat(ttc) + " FCFA";
+            return { totalHT, tva, ttc };
+        }
+
+        function openModalDoc(type) {
+            currentDocType = type;
+            updateDocPrefix();
+            document.getElementById('doc_suffix').value = Math.floor(1000 + Math.random() * 8999);
+            document.getElementById('docTitle').innerText = type === 'BON' ? "ÉMISSION BON DE COMMANDE" : "ÉMISSION FACTURE NORMALISÉE";
+            document.getElementById('docHeaderColor').className = type === 'BON' ? "bg-orange-500 p-4 mb-4 text-white font-bold flex justify-between uppercase text-xs" : "bg-slate-800 p-4 mb-4 text-white font-bold flex justify-between uppercase text-xs";
+            document.getElementById('btnGenDoc').className = type === 'BON' ? "w-full bg-orange-500 p-4 rounded-lg font-bold uppercase text-xs mt-4 text-white" : "w-full bg-slate-800 p-4 rounded-lg font-bold uppercase text-xs mt-4 text-white";
+            document.getElementById('itemsList').innerHTML = ''; addItemLine(); openModal('doc');
+        }
+
+        async function saveAndGeneratePDF() {
+            const totals = calculateDoc();
+            const items = [];
+            document.querySelectorAll('#itemsList tr').forEach(tr => {
+                const name = tr.querySelector('.item-name').value;
+                if(name) items.push({ name: name, qte: tr.querySelector('.item-qte').value, pu: tr.querySelector('.item-pu').value });
+            });
+            const fullNum = document.getElementById('doc_prefix').value + document.getElementById('doc_suffix').value;
+            const docData = { entity: currentEntity, type: currentDocType, num: fullNum, client: document.getElementById('doc_client').value, date: new Date().toLocaleDateString('fr-FR'), items: items, totalHT: totals.totalHT, tva: totals.tva, totalTTC: totals.ttc };
+            await fetch(ARCHIVE_URL, { method: 'POST', body: JSON.stringify(docData) });
+            fetchArchives(); generatePDF(docData); closeModal('doc');
+        }
+
+        function generatePDF(data) {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            doc.setFont("helvetica", "bold").setFontSize(16);
+            doc.text(`${data.type === 'BON' ? 'BON DE COMMANDE' : 'FACTURE NORMALISEE'} N. ${data.num}`, 14, 70);
+            doc.setFontSize(10).setFont("helvetica", "normal");
+            doc.text(`STRUCTURE : ECF - ${data.entity}`, 14, 78);
+            doc.text(`DESTINATAIRE : ${data.client.toUpperCase()}`, 14, 84);
+            doc.text(`DATE : ${data.date}`, 14, 90);
+            const rows = data.items.map(i => [i.name.toUpperCase(), i.qte, cleanFormat(i.pu), cleanFormat(i.qte * i.pu)]);
+            doc.autoTable({ startY: 100, head: [['DESIGNATION', 'QTE', 'P.U HT', 'TOTAL HT']], body: rows, headStyles: { fillColor: data.type === 'BON' ? [249, 115, 22] : [30, 41, 59] } });
+            const finalY = doc.lastAutoTable.finalY + 10;
+            doc.setFontSize(10).setFont("helvetica", "bold");
+            doc.text(`TOTAL HT : ${cleanFormat(data.totalHT)} FCFA`, 120, finalY);
+            doc.text(`TVA (18%) : ${cleanFormat(data.tva)} FCFA`, 120, finalY + 7);
+            doc.setFontSize(12).text(`NET A PAYER (TTC) : ${cleanFormat(data.totalTTC)} FCFA`, 120, finalY + 17);
+            doc.save(`${data.type}_${data.num}.pdf`);
+        }
+
+        async function fetchArchives() {
+            const res = await fetch(ARCHIVE_URL); const data = await res.json();
+            const body = document.getElementById('archiveBody'); body.innerHTML = '';
+            if(!data) return;
+            Object.keys(data).reverse().forEach(id => {
+                const a = data[id];
+                if(a.entity === currentEntity) {
+                    body.innerHTML += `<tr><td class="font-bold text-blue-600">${a.num}</td><td>${a.date}</td><td class="text-[10px] font-bold uppercase">${a.type}</td><td>${a.client}</td><td class="text-right font-black">${cleanFormat(a.totalTTC)}</td><td class="text-center"><button onclick='generatePDF(${JSON.stringify(a)})' class="text-blue-500 mr-2"><i class="fas fa-file-pdf"></i></button><button onclick="deleteArchive('${id}')" class="text-red-300">✕</button></td></tr>`;
+                }
+            });
+        }
+
+        async function deleteArchive(id) { if(prompt("PASS?") === ADMIN_PASS) { await fetch(ARCHIVE_URL.replace('.json', '/') + id + '.json', { method: 'DELETE' }); fetchArchives(); } }
+
+        function switchEntity(e) { 
+            currentEntity = e; 
+            document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active-entity', b.id === 'tab-'+e)); 
+            fetchFirebase(); 
+            if(!document.getElementById('section-archives').classList.contains('hidden')) fetchArchives(); 
+        }
+
+        async function fetchFirebase() {
+            const res = await fetch(FIREBASE_URL); const data = await res.json();
+            transactions = data ? Object.keys(data).map(k => ({id: k, ...data[k]})) : [];
+            render();
+        }
+
+        async function saveToFirebase() {
+            if(prompt("ADMIN PASS?") !== ADMIN_PASS) return;
+            const entry = { entity: currentEntity, date: document.getElementById('f_date').value, libelle: document.getElementById('f_lib').value, tiers: document.getElementById('f_tiers').value, type: document.getElementById('f_type').value, mode: document.getElementById('f_mode').value, montant: parseFloat(document.getElementById('f_mt').value) || 0 };
+            await fetch(FIREBASE_URL, { method: 'POST', body: JSON.stringify(entry) });
+            closeModal('entry');
+            fetchFirebase();
+        }
+
+        function render() {
+            const body = document.getElementById('mainBody'); body.innerHTML = ''; let solde = 0;
+            const yearFilter = document.getElementById('filterYear').value;
+            transactions.filter(t => t.entity === currentEntity && t.date.startsWith(yearFilter)).forEach((t, i) => {
+                const isE = t.type === 'ENTREE'; solde += isE ? t.montant : -t.montant;
+                body.innerHTML += `<tr><td class="text-center opacity-30">${i+1}</td><td>${t.date}</td><td class="font-bold">${t.libelle.toUpperCase()}</td><td>${t.tiers || '-'}</td><td class="text-center text-[10px]">${t.mode}</td><td class="text-right font-black ${isE?'text-emerald-600':'text-red-500'}">${cleanFormat(t.montant)}</td><td class="text-center"><button onclick="deleteTx('${t.id}')">✕</button></td></tr>`;
+            });
+            document.getElementById('statSolde').innerText = cleanFormat(solde) + " FCFA";
+        }
+
+        async function deleteTx(id) { if(prompt("PASS?") === ADMIN_PASS) { await fetch(FIREBASE_URL.replace('.json', '/') + id + '.json', { method: 'DELETE' }); fetchFirebase(); } }
+        function setupYears() { const s = document.getElementById('filterYear'); for(let y=2000; y<=2500; y++){ let o = document.createElement('option'); o.value=y; o.text="EXERCICE "+y; if(y==new Date().getFullYear()) o.selected=true; s.add(o); } updateDocPrefix(); }
+        
+        setupYears(); 
+        document.getElementById('f_date').valueAsDate = new Date(); 
+        fetchFirebase();
+    </script>
+</body>
+</html>
