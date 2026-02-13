@@ -19,7 +19,7 @@
 </head>
 <body class="h-screen flex flex-col">
 
-    <header class="bg-[#0f172a] text-white p-4 flex justify-between items-center shadow-lg">
+    <header class="bg-[#0f172a] text-white p-4 flex flex-wrap justify-between items-center shadow-lg gap-4">
         <div class="flex items-center gap-6">
             <h1 class="text-2xl font-black italic tracking-tighter">ECF<span class="text-blue-500 text-sm ml-1 uppercase"> Commerce</span></h1>
             <nav class="flex gap-4 text-[10px] font-bold text-slate-400">
@@ -27,17 +27,29 @@
                 <button onclick="switchEntity('BUREAU')" id="tab-BUREAU" class="py-2 px-1 transition-all uppercase">Fournitures & Informatique</button>
             </nav>
         </div>
+
+        <div class="flex items-center gap-2 bg-slate-800 p-2 rounded-lg border border-slate-700">
+            <div class="flex flex-col">
+                <label class="text-[8px] uppercase font-bold text-blue-400">Du</label>
+                <input type="date" id="dateDebut" onchange="render()" class="bg-transparent text-white text-xs outline-none">
+            </div>
+            <div class="flex flex-col border-l border-slate-600 pl-2">
+                <label class="text-[8px] uppercase font-bold text-blue-400">Au</label>
+                <input type="date" id="dateFin" onchange="render()" class="bg-transparent text-white text-xs outline-none">
+            </div>
+            <button onclick="resetDates()" class="text-slate-400 hover:text-white px-1"><i class="fas fa-sync-alt text-[10px]"></i></button>
+        </div>
         
-        <div class="flex gap-6 items-center">
+        <div class="flex gap-4 items-center">
             <div class="text-right">
-                <p class="text-[9px] uppercase text-slate-400 font-bold">Total Achats (Sorties)</p>
+                <p class="text-[9px] uppercase text-slate-400 font-bold">Achats</p>
                 <p id="totalAchats" class="text-red-400 font-mono font-bold">0 F</p>
             </div>
-            <div class="text-right">
-                <p class="text-[9px] uppercase text-slate-400 font-bold">Total Ventes (Entrées)</p>
+            <div class="text-right border-l border-slate-700 pl-4">
+                <p class="text-[9px] uppercase text-slate-400 font-bold">Ventes</p>
                 <p id="totalVentes" class="text-emerald-400 font-mono font-bold">0 F</p>
             </div>
-            <div class="bg-slate-800 px-4 py-1 rounded border border-slate-700 text-right min-w-[150px]">
+            <div class="bg-slate-900 px-4 py-1 rounded border border-blue-900/50 text-right min-w-[140px]">
                 <p class="text-[9px] uppercase text-blue-400 font-bold">Bénéfice Net</p>
                 <p id="totalMarge" class="text-white font-mono font-black text-lg">0 FCFA</p>
             </div>
@@ -83,39 +95,39 @@
 
     <div id="modalEntry" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-[100]">
         <div class="bg-white w-[500px] rounded-lg shadow-2xl p-6 border-t-4 border-blue-600">
-            <h3 class="font-black mb-4 uppercase text-slate-800 border-b pb-2 italic text-sm">Saisie Flux Manuel</h3>
+            <h3 class="font-black mb-4 uppercase text-slate-800 border-b pb-2 italic text-sm text-center">Nouveau Flux Trésorerie</h3>
             <div class="grid grid-cols-2 gap-4">
-                <input type="text" id="f_lib" placeholder="Libellé" class="col-span-2 border p-3 rounded text-sm outline-none">
-                <input type="text" id="f_tiers" placeholder="Tiers" class="col-span-2 border p-3 rounded text-sm outline-none">
+                <input type="text" id="f_lib" placeholder="Libellé" class="col-span-2 border p-3 rounded text-sm outline-none focus:ring-1 focus:ring-blue-500">
+                <input type="text" id="f_tiers" placeholder="Tiers" class="col-span-2 border p-3 rounded text-sm outline-none focus:ring-1 focus:ring-blue-500">
                 <select id="f_type" class="border p-3 rounded text-sm font-bold bg-slate-50">
-                    <option value="ENTREE">ENTRÉE (Vente)</option>
-                    <option value="SORTIE">SORTIE (Achat/Dépense)</option>
+                    <option value="ENTREE">RECETTE (Vente +)</option>
+                    <option value="SORTIE">DÉPENSE (Achat -)</option>
                 </select>
                 <input type="number" id="f_mt" placeholder="Montant" class="border p-3 rounded text-sm font-bold text-blue-600">
                 <select id="f_mode" class="border p-3 rounded text-sm"><option>Espèce</option><option>Virement</option><option>Chèque</option><option>Mobile Money</option></select>
                 <input type="date" id="f_date" class="border p-3 rounded text-sm">
-                <button onclick="saveToFirebase()" class="col-span-2 bg-blue-600 text-white p-4 rounded font-bold uppercase text-[11px]">Enregistrer le Flux</button>
-                <button onclick="closeModal('entry')" class="col-span-2 text-slate-400 text-[10px] font-bold uppercase text-center mt-1">Annuler</button>
+                <button onclick="saveToFirebase()" class="col-span-2 bg-blue-600 text-white p-4 rounded font-bold uppercase text-[11px] shadow-lg">Valider le Flux</button>
+                <button onclick="closeModal('entry')" class="col-span-2 text-slate-400 text-[10px] font-bold uppercase text-center mt-1">Fermer</button>
             </div>
         </div>
     </div>
 
     <div id="modalDoc" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-[100] backdrop-blur-sm">
         <div class="bg-white w-[850px] max-h-[90vh] overflow-y-auto rounded-lg shadow-2xl p-6">
-            <div id="docHeaderColor" class="p-4 mb-4 text-white font-bold flex justify-between uppercase text-xs">
+            <div id="docHeaderColor" class="p-4 mb-4 text-white font-bold flex justify-between uppercase text-xs rounded">
                 <span id="docTitle">DOCUMENT</span>
                 <button onclick="closeModal('doc')">✕</button>
             </div>
             <div class="grid grid-cols-2 gap-4 mb-6">
                 <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Numéro de Document</label>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Numérotation</label>
                     <div class="flex">
                         <input type="text" id="doc_prefix" class="w-12 border border-r-0 p-2 rounded-l bg-slate-200 font-bold text-center text-slate-700" readonly>
                         <input type="text" id="doc_suffix" maxlength="4" placeholder="0000" class="flex-1 border p-2 rounded-r font-mono font-bold text-blue-600 outline-none">
                     </div>
                 </div>
                 <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Nom du Client</label>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Client / Destinataire</label>
                     <input type="text" id="doc_client" class="w-full border p-2 rounded outline-none">
                 </div>
             </div>
@@ -124,19 +136,18 @@
                     <thead><tr class="text-slate-400 uppercase text-[9px] border-b"><th class="text-left p-2">Désignation</th><th class="w-20 p-2 text-center">Qté</th><th class="w-32 p-2 text-right">P.U HT</th><th class="w-8"></th></tr></thead>
                     <tbody id="itemsList"></tbody>
                 </table>
-                <button onclick="addItemLine()" class="mt-4 text-blue-600 text-[10px] font-bold uppercase">+ Ajouter une ligne de produit</button>
+                <button onclick="addItemLine()" class="mt-4 text-blue-600 text-[10px] font-bold uppercase">+ Ajouter un article</button>
             </div>
             <div class="bg-slate-900 text-white p-5 rounded-lg">
-                <div class="flex justify-between text-xs opacity-50 mb-1"><span>Total Hors Taxe (HT)</span><span id="res_ht">0 FCFA</span></div>
+                <div class="flex justify-between text-xs opacity-50 mb-1"><span>Base HT</span><span id="res_ht">0 FCFA</span></div>
                 <div class="flex justify-between text-xs text-blue-400 font-bold mb-3"><span>TVA (18%)</span><span id="res_tva">0 FCFA</span></div>
                 <div class="flex justify-between text-2xl font-black border-t border-slate-700 pt-3"><span>TOTAL TTC</span><span id="res_ttc">0 FCFA</span></div>
             </div>
-            <button onclick="saveAndGeneratePDF()" id="btnGenDoc" class="w-full p-4 rounded-lg font-bold uppercase text-xs mt-4 text-white shadow-lg">Générer, Archiver & Flux</button>
+            <button onclick="saveAndGeneratePDF()" id="btnGenDoc" class="w-full p-4 rounded-lg font-bold uppercase text-xs mt-4 text-white shadow-lg transition-transform active:scale-95">Valider, Archiver & Créer Flux</button>
         </div>
     </div>
 
     <script>
-        // CONFIGURATION FIREBASE INTEGRÉE
         const FIREBASE_URL = "https://ecfcommerce-b3893-default-rtdb.firebaseio.com/data.json";
         const ARCHIVE_URL = "https://ecfcommerce-b3893-default-rtdb.firebaseio.com/archives.json";
         const ADMIN_PASS = "ECF2026";
@@ -157,6 +168,12 @@
             document.getElementById('doc_prefix').value = year.toString().slice(-2);
         }
 
+        function resetDates() {
+            document.getElementById('dateDebut').value = '';
+            document.getElementById('dateFin').value = '';
+            render();
+        }
+
         function showSection(id) {
             document.getElementById('section-compta').classList.toggle('hidden', id !== 'compta');
             document.getElementById('section-archives').classList.toggle('hidden', id !== 'archives');
@@ -169,10 +186,7 @@
         function addItemLine() {
             const tr = document.createElement('tr');
             tr.className = "border-b border-slate-100";
-            let inputHtml = `<select class="w-full bg-transparent item-name p-2 outline-none font-bold text-slate-700 appearance-none"><option value="">-- Sélectionner produit --</option>${LISTE_BIOMED.map(m => `<option value="${m}">${m}</option>`).join('')}</select>`;
-            if(currentEntity !== "BIOMED") {
-                inputHtml = `<input type="text" class="w-full bg-transparent p-2 item-name outline-none font-bold text-slate-700" placeholder="Désignation...">`;
-            }
+            let inputHtml = currentEntity === "BIOMED" ? `<select class="w-full bg-transparent item-name p-2 outline-none font-bold text-slate-700 appearance-none"><option value="">-- Choisir --</option>${LISTE_BIOMED.map(m => `<option value="${m}">${m}</option>`).join('')}</select>` : `<input type="text" class="w-full bg-transparent p-2 item-name outline-none font-bold text-slate-700" placeholder="Désignation...">`;
             tr.innerHTML = `<td class="p-1">${inputHtml}</td><td class="p-1"><input type="number" class="w-full text-center bg-transparent item-qte font-bold" value="1" oninput="calculateDoc()"></td><td class="p-1"><input type="number" class="w-full text-right bg-transparent font-bold item-pu text-blue-600" placeholder="0" oninput="calculateDoc()"></td><td class="p-1 text-center"><button onclick="this.parentElement.parentElement.remove();calculateDoc()" class="text-red-300">✕</button></td>`;
             document.getElementById('itemsList').appendChild(tr);
         }
@@ -185,11 +199,12 @@
                 const p = parseFloat(pus[i].value) || 0;
                 totalHT += (q * p); 
             });
-            const tva = totalHT * 0.18, ttc = totalHT + tva;
+            const tva = totalHT * 0.18;
+            const ttc = totalHT + tva;
             document.getElementById('res_ht').innerText = cleanFormat(totalHT) + " FCFA";
             document.getElementById('res_tva').innerText = cleanFormat(tva) + " FCFA";
             document.getElementById('res_ttc').innerText = cleanFormat(ttc) + " FCFA";
-            return { totalHT, tva, ttc };
+            return { totalHT, tva, totalTTC: ttc };
         }
 
         function openModalDoc(type) {
@@ -197,18 +212,18 @@
             updateDocPrefix();
             document.getElementById('doc_suffix').value = "";
             let title = "", color = "";
-            if(type === 'BON') { title = "CRÉATION BON DE COMMANDE"; color = "bg-orange-500"; }
-            else if(type === 'FACTURE') { title = "CRÉATION FACTURE NORMALISÉE"; color = "bg-slate-800"; }
-            else { title = "CRÉATION FACTURE RÉELLE"; color = "bg-indigo-700"; }
+            if(type === 'BON') { title = "BON DE COMMANDE (SORTIE FLUX)"; color = "bg-orange-500"; }
+            else if(type === 'FACTURE') { title = "FACTURE NORMALISÉE"; color = "bg-slate-800"; }
+            else { title = "FACTURE RÉELLE"; color = "bg-indigo-700"; }
 
             document.getElementById('docTitle').innerText = title;
-            document.getElementById('docHeaderColor').className = `${color} p-4 mb-4 text-white font-bold flex justify-between uppercase text-xs`;
-            document.getElementById('btnGenDoc').className = `w-full ${color} p-4 rounded-lg font-bold uppercase text-xs mt-4 text-white shadow-lg`;
+            document.getElementById('docHeaderColor').className = `${color} p-4 mb-4 text-white font-bold flex justify-between uppercase text-xs rounded`;
+            document.getElementById('btnGenDoc').className = `w-full ${color} p-4 rounded-lg font-bold uppercase text-xs mt-4 text-white shadow-lg transition-transform active:scale-95`;
             document.getElementById('itemsList').innerHTML = ''; addItemLine(); openModal('doc');
         }
 
         async function saveAndGeneratePDF() {
-            const totals = calculateDoc();
+            const resultCalcul = calculateDoc(); // On capture le résultat exact ici
             const client = document.getElementById('doc_client').value || "Client Divers";
             const fullNum = document.getElementById('doc_prefix').value + document.getElementById('doc_suffix').value;
             const items = [];
@@ -217,21 +232,24 @@
                 if(name) items.push({ name: name, qte: tr.querySelector('.item-qte').value, pu: tr.querySelector('.item-pu').value });
             });
 
-            const docData = { entity: currentEntity, type: currentDocType, num: fullNum, client: client, date: new Date().toLocaleDateString('fr-FR'), items: items, totalHT: totals.totalHT, tva: totals.tva, totalTTC: totals.ttc };
+            const docData = { 
+                entity: currentEntity, type: currentDocType, num: fullNum, 
+                client: client, date: new Date().toLocaleDateString('fr-FR'), 
+                items: items, totalHT: resultCalcul.totalHT, 
+                tva: resultCalcul.tva, totalTTC: resultCalcul.totalTTC 
+            };
             
-            // 1. Sauvegarde Archive
             await fetch(ARCHIVE_URL, { method: 'POST', body: JSON.stringify(docData) });
 
-            // 2. Automatisme Flux (SORTIE pour Bon de Commande uniquement)
             if(currentDocType === 'BON') {
                 const autoFlux = {
                     entity: currentEntity,
                     date: new Date().toISOString().split('T')[0],
-                    libelle: "ACHAT PRODUITS - ECF " + currentEntity,
+                    libelle: "ACHAT / BON - ECF " + currentEntity,
                     tiers: client,
                     type: "SORTIE",
                     mode: "Espèce",
-                    montant: Number(totals.totalTTC) // Forcer le format nombre pour éviter NaN
+                    montant: Number(resultCalcul.totalTTC) // Utilisation du montant calculé
                 };
                 await fetch(FIREBASE_URL, { method: 'POST', body: JSON.stringify(autoFlux) });
             }
@@ -251,13 +269,13 @@
             doc.text(`DESTINATAIRE : ${data.client.toUpperCase()}`, 14, 84);
             doc.text(`DATE : ${data.date}`, 14, 90);
             const rows = data.items.map(i => [i.name.toUpperCase(), i.qte, cleanFormat(i.pu), cleanFormat(i.qte * i.pu)]);
-            doc.autoTable({ startY: 100, head: [['DESIGNATION', 'QTE', 'P.U HT', 'TOTAL HT']], body: rows, headStyles: { fillColor: [40, 40, 40] } });
+            doc.autoTable({ startY: 100, head: [['DESIGNATION', 'QTE', 'P.U HT', 'TOTAL HT']], body: rows, headStyles: { fillColor: [30, 41, 59] } });
             const finalY = doc.lastAutoTable.finalY + 10;
             doc.setFontSize(10).setFont("helvetica", "bold");
             doc.text(`TOTAL HT : ${cleanFormat(data.totalHT)} FCFA`, 110, finalY);
             doc.text(`TVA (18%) : ${cleanFormat(data.tva)} FCFA`, 110, finalY + 7);
             doc.setFontSize(12).text(`NET A PAYER (TTC) : ${cleanFormat(data.totalTTC)} FCFA`, 110, finalY + 17);
-            doc.save(`${data.type}_${data.num}_ECF.pdf`);
+            doc.save(`${data.type}_${data.num}.pdf`);
         }
 
         async function fetchArchives() {
@@ -297,11 +315,19 @@
             const body = document.getElementById('mainBody'); body.innerHTML = ''; 
             let achats = 0; let ventes = 0;
             const yearFilter = document.getElementById('filterYear').value;
+            const dDebut = document.getElementById('dateDebut').value;
+            const dFin = document.getElementById('dateFin').value;
             
-            transactions.filter(t => t.entity === currentEntity && t.date.startsWith(yearFilter)).forEach((t, i) => {
+            transactions.filter(t => {
+                const matchesEntity = t.entity === currentEntity;
+                const matchesYear = t.date.startsWith(yearFilter);
+                let matchesPeriod = true;
+                if(dDebut && t.date < dDebut) matchesPeriod = false;
+                if(dFin && t.date > dFin) matchesPeriod = false;
+                return matchesEntity && matchesYear && matchesPeriod;
+            }).forEach((t, i) => {
                 const isE = t.type === 'ENTREE'; 
                 if(isE) ventes += (Number(t.montant) || 0); else achats += (Number(t.montant) || 0);
-                
                 body.innerHTML += `<tr><td class="text-center opacity-30">${i+1}</td><td>${t.date}</td><td class="font-bold">${t.libelle.toUpperCase()}</td><td>${t.tiers || '-'}</td><td class="text-center text-[10px]">${t.mode}</td><td class="text-right font-black ${isE?'text-emerald-600':'text-red-500'}">${cleanFormat(t.montant)}</td><td class="text-center"><button onclick="deleteTx('${t.id}')">✕</button></td></tr>`;
             });
             
@@ -309,14 +335,14 @@
             document.getElementById('totalAchats').innerText = cleanFormat(achats) + " F";
             document.getElementById('totalVentes').innerText = cleanFormat(ventes) + " F";
             document.getElementById('totalMarge').innerText = cleanFormat(marge) + " FCFA";
-            document.getElementById('totalMarge').className = marge >= 0 ? "text-emerald-400 font-mono font-black text-lg" : "text-red-500 font-mono font-black text-lg";
+            document.getElementById('totalMarge').className = marge >= 0 ? "text-white font-mono font-black text-lg" : "text-red-500 font-mono font-black text-lg";
         }
 
         async function deleteTx(id) { if(prompt("PASS ADMIN?") === ADMIN_PASS) { await fetch(FIREBASE_URL.replace('.json', '/') + id + '.json', { method: 'DELETE' }); fetchFirebase(); } }
 
         function setupYears() {
             const s = document.getElementById('filterYear');
-            for(let y=2024; y<=2030; y++){
+            for(let y=2000; y<=2200; y++){
                 let o = document.createElement('option'); o.value=y; o.text="EXERCICE "+y;
                 if(y==new Date().getFullYear()) o.selected=true;
                 s.add(o);
