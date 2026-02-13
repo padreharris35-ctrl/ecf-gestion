@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ECF Commerce Général | Cloud</title>
+    <title>ECF Commerce Général | Gestion Cloud</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
@@ -30,13 +30,14 @@
         <div id="statSolde" class="text-xl font-mono font-bold text-emerald-400">0 FCFA</div>
     </header>
 
-    <nav class="bg-white border-b p-3 flex justify-between items-center px-6">
-        <div class="flex gap-2">
-            <button onclick="openModal('entry')" class="bg-blue-600 text-white px-4 py-2 rounded text-[11px] font-bold uppercase italic shadow-sm"><i class="fas fa-plus mr-1"></i> Saisir Flux</button>
-            <button onclick="openModalDoc('BON')" class="bg-orange-500 text-white px-4 py-2 rounded text-[11px] font-bold uppercase italic shadow-sm"><i class="fas fa-shopping-cart mr-1"></i> Bon de Commande</button>
-            <button onclick="openModalDoc('FACTURE')" class="bg-slate-800 text-white px-4 py-2 rounded text-[11px] font-bold uppercase italic shadow-sm"><i class="fas fa-file-invoice-dollar mr-1"></i> Facture Normalisée</button>
-            <button onclick="showSection('archives')" class="bg-emerald-600 text-white px-4 py-2 rounded text-[11px] font-bold uppercase italic shadow-sm"><i class="fas fa-archive mr-1"></i> Archives Documents</button>
-            <button onclick="showSection('compta')" class="bg-slate-500 text-white px-4 py-2 rounded text-[11px] font-bold uppercase italic shadow-sm">Tableau de Bord</button>
+    <nav class="bg-white border-b p-3 flex flex-wrap gap-2 justify-between items-center px-6">
+        <div class="flex flex-wrap gap-2">
+            <button onclick="openModal('entry')" class="bg-blue-600 text-white px-3 py-2 rounded text-[10px] font-bold uppercase italic shadow-sm"><i class="fas fa-plus mr-1"></i> Flux Manuel</button>
+            <button onclick="openModalDoc('BON')" class="bg-orange-500 text-white px-3 py-2 rounded text-[10px] font-bold uppercase italic shadow-sm"><i class="fas fa-shopping-cart mr-1"></i> Bon de Commande</button>
+            <button onclick="openModalDoc('FACTURE')" class="bg-slate-800 text-white px-3 py-2 rounded text-[10px] font-bold uppercase italic shadow-sm"><i class="fas fa-file-invoice-dollar mr-1"></i> Facture Normalisée</button>
+            <button onclick="openModalDoc('REELLE')" class="bg-indigo-700 text-white px-3 py-2 rounded text-[10px] font-bold uppercase italic shadow-sm"><i class="fas fa-receipt mr-1"></i> Facture Réelle</button>
+            <button onclick="showSection('archives')" class="bg-emerald-600 text-white px-3 py-2 rounded text-[10px] font-bold uppercase italic shadow-sm"><i class="fas fa-archive mr-1"></i> Archives</button>
+            <button onclick="showSection('compta')" class="bg-slate-500 text-white px-3 py-2 rounded text-[10px] font-bold uppercase italic shadow-sm">Trésorerie</button>
         </div>
         <div class="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase">
             <span>Exercice</span>
@@ -48,7 +49,7 @@
         <div class="border rounded-lg overflow-hidden bg-white shadow-sm">
             <table class="excel-table">
                 <thead>
-                    <tr><th class="w-12 text-center">Réf</th><th class="w-24">Date</th><th>Opération</th><th>Tiers / Client</th><th class="w-28 text-center">Paiement</th><th class="text-right w-36">Montant (FCFA)</th><th class="w-10"></th></tr>
+                    <tr><th class="w-12 text-center">Réf</th><th class="w-24">Date</th><th>Opération</th><th>Tiers</th><th class="w-28 text-center">Paiement</th><th class="text-right w-36">Montant (FCFA)</th><th class="w-10"></th></tr>
                 </thead>
                 <tbody id="mainBody"></tbody>
             </table>
@@ -68,15 +69,15 @@
 
     <div id="modalEntry" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-[100]">
         <div class="bg-white w-[500px] rounded-lg shadow-2xl p-6 border-t-4 border-blue-600">
-            <h3 class="font-black mb-4 uppercase text-slate-800 border-b pb-2 italic text-sm">Nouvelle Opération de Trésorerie</h3>
+            <h3 class="font-black mb-4 uppercase text-slate-800 border-b pb-2 italic text-sm">Nouveau Flux</h3>
             <div class="grid grid-cols-2 gap-4">
-                <input type="text" id="f_lib" placeholder="Libellé de l'opération" class="col-span-2 border p-3 rounded text-sm outline-none">
-                <input type="text" id="f_tiers" placeholder="Tiers / Bénéficiaire" class="col-span-2 border p-3 rounded text-sm outline-none">
+                <input type="text" id="f_lib" placeholder="Libellé" class="col-span-2 border p-3 rounded text-sm outline-none">
+                <input type="text" id="f_tiers" placeholder="Tiers" class="col-span-2 border p-3 rounded text-sm outline-none">
                 <select id="f_type" class="border p-3 rounded text-sm font-bold bg-slate-50"><option value="ENTREE">RECETTE (+)</option><option value="SORTIE">DEPENSE (-)</option></select>
-                <input type="number" id="f_mt" placeholder="Montant FCFA" class="border p-3 rounded text-sm font-bold text-blue-600">
+                <input type="number" id="f_mt" placeholder="Montant" class="border p-3 rounded text-sm font-bold text-blue-600">
                 <select id="f_mode" class="border p-3 rounded text-sm"><option>Espèce</option><option>Virement</option><option>Chèque</option><option>Mobile Money</option></select>
                 <input type="date" id="f_date" class="border p-3 rounded text-sm">
-                <button onclick="saveToFirebase()" class="col-span-2 bg-blue-600 text-white p-4 rounded font-bold uppercase text-[11px] shadow-lg hover:bg-blue-700">Valider l'enregistrement</button>
+                <button onclick="saveToFirebase()" class="col-span-2 bg-blue-600 text-white p-4 rounded font-bold uppercase text-[11px]">Enregistrer</button>
                 <button onclick="closeModal('entry')" class="col-span-2 text-slate-400 text-[10px] font-bold uppercase text-center mt-1">Annuler</button>
             </div>
         </div>
@@ -90,14 +91,14 @@
             </div>
             <div class="grid grid-cols-2 gap-4 mb-6">
                 <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Numéro de document</label>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Numéro (Bloqué)</label>
                     <div class="flex">
-                        <input type="text" id="doc_prefix" class="w-12 border border-r-0 p-2 rounded-l bg-slate-100 font-bold text-center" readonly>
+                        <input type="text" id="doc_prefix" class="w-12 border border-r-0 p-2 rounded-l bg-slate-200 font-bold text-center text-slate-700" readonly>
                         <input type="text" id="doc_suffix" maxlength="4" placeholder="0000" class="flex-1 border p-2 rounded-r font-mono font-bold text-blue-600 outline-none">
                     </div>
                 </div>
                 <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Client</label>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Nom du Client</label>
                     <input type="text" id="doc_client" class="w-full border p-2 rounded outline-none">
                 </div>
             </div>
@@ -106,7 +107,7 @@
                     <thead><tr class="text-slate-400 uppercase text-[9px] border-b"><th class="text-left p-2">Désignation</th><th class="w-20 p-2 text-center">Qté</th><th class="w-32 p-2 text-right">P.U HT</th><th class="w-8"></th></tr></thead>
                     <tbody id="itemsList"></tbody>
                 </table>
-                <button onclick="addItemLine()" class="mt-4 text-blue-600 text-[10px] font-bold uppercase">+ Ajouter un article</button>
+                <button onclick="addItemLine()" class="mt-4 text-blue-600 text-[10px] font-bold uppercase">+ Ajouter une ligne</button>
             </div>
             <div class="bg-slate-900 text-white p-5 rounded-lg">
                 <div class="flex justify-between text-xs opacity-50 mb-1"><span>Total HT</span><span id="res_ht">0 FCFA</span></div>
@@ -118,9 +119,11 @@
     </div>
 
     <script>
+        // REMPLACER PAR TES LIENS FIREBASE
         const FIREBASE_URL = "https://ecfcommerce-b3893-default-rtdb.firebaseio.com/data.json";
         const ARCHIVE_URL = "https://ecfcommerce-b3893-default-rtdb.firebaseio.com/archives.json";
         const ADMIN_PASS = "ECF2026";
+
         let currentEntity = "BIOMED";
         let transactions = [];
         let currentDocType = "BON";
@@ -140,18 +143,14 @@
             if(id === 'archives') fetchArchives();
         }
 
-        function openModal(id) {
-            document.getElementById('modal' + id.charAt(0).toUpperCase() + id.slice(1)).classList.remove('hidden');
-        }
-
-        function closeModal(id) {
-            document.getElementById('modal' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('hidden');
-        }
+        function openModal(id) { document.getElementById('modal' + id.charAt(0).toUpperCase() + id.slice(1)).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById('modal' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('hidden'); }
 
         function addItemLine() {
             const tr = document.createElement('tr');
             tr.className = "border-b border-slate-100";
-            let inputHtml = currentEntity === "BIOMED" ? `<select class="w-full bg-transparent item-name p-2 outline-none font-bold text-slate-700 appearance-none"><option value="">-- Choisir --</option>${LISTE_BIOMED.map(m => `<option value="${m}">${m}</option>`).join('')}</select>` : `<input type="text" class="w-full bg-transparent p-2 item-name outline-none font-bold text-slate-700" placeholder="Saisir...">`;
+            // Liste Biomédicale pour TOUS les types de documents
+            let inputHtml = currentEntity === "BIOMED" ? `<select class="w-full bg-transparent item-name p-2 outline-none font-bold text-slate-700 appearance-none"><option value="">-- Choisir --</option>${LISTE_BIOMED.map(m => `<option value="${m}">${m}</option>`).join('')}</select>` : `<input type="text" class="w-full bg-transparent p-2 item-name outline-none font-bold text-slate-700" placeholder="Désignation...">`;
             tr.innerHTML = `<td class="p-1">${inputHtml}</td><td class="p-1"><input type="number" class="w-full text-center bg-transparent item-qte font-bold" value="1" oninput="calculateDoc()"></td><td class="p-1"><input type="number" class="w-full text-right bg-transparent font-bold item-pu text-blue-600" placeholder="0" oninput="calculateDoc()"></td><td class="p-1 text-center"><button onclick="this.parentElement.parentElement.remove();calculateDoc()" class="text-red-300">✕</button></td>`;
             document.getElementById('itemsList').appendChild(tr);
         }
@@ -170,41 +169,68 @@
         function openModalDoc(type) {
             currentDocType = type;
             updateDocPrefix();
-            document.getElementById('doc_suffix').value = Math.floor(1000 + Math.random() * 8999);
-            document.getElementById('docTitle').innerText = type === 'BON' ? "ÉMISSION BON DE COMMANDE" : "ÉMISSION FACTURE NORMALISÉE";
-            document.getElementById('docHeaderColor').className = type === 'BON' ? "bg-orange-500 p-4 mb-4 text-white font-bold flex justify-between uppercase text-xs" : "bg-slate-800 p-4 mb-4 text-white font-bold flex justify-between uppercase text-xs";
-            document.getElementById('btnGenDoc').className = type === 'BON' ? "w-full bg-orange-500 p-4 rounded-lg font-bold uppercase text-xs mt-4 text-white" : "w-full bg-slate-800 p-4 rounded-lg font-bold uppercase text-xs mt-4 text-white";
+            document.getElementById('doc_suffix').value = "";
+            let title = "", color = "";
+            if(type === 'BON') { title = "ÉMISSION BON DE COMMANDE"; color = "bg-orange-500"; }
+            else if(type === 'FACTURE') { title = "ÉMISSION FACTURE NORMALISÉE"; color = "bg-slate-800"; }
+            else { title = "ÉMISSION FACTURE RÉELLE"; color = "bg-indigo-700"; }
+
+            document.getElementById('docTitle').innerText = title;
+            document.getElementById('docHeaderColor').className = `${color} p-4 mb-4 text-white font-bold flex justify-between uppercase text-xs`;
+            document.getElementById('btnGenDoc').className = `w-full ${color} p-4 rounded-lg font-bold uppercase text-xs mt-4 text-white shadow-lg`;
             document.getElementById('itemsList').innerHTML = ''; addItemLine(); openModal('doc');
         }
 
         async function saveAndGeneratePDF() {
             const totals = calculateDoc();
+            const client = document.getElementById('doc_client').value;
+            const fullNum = document.getElementById('doc_prefix').value + document.getElementById('doc_suffix').value;
             const items = [];
             document.querySelectorAll('#itemsList tr').forEach(tr => {
                 const name = tr.querySelector('.item-name').value;
                 if(name) items.push({ name: name, qte: tr.querySelector('.item-qte').value, pu: tr.querySelector('.item-pu').value });
             });
-            const fullNum = document.getElementById('doc_prefix').value + document.getElementById('doc_suffix').value;
-            const docData = { entity: currentEntity, type: currentDocType, num: fullNum, client: document.getElementById('doc_client').value, date: new Date().toLocaleDateString('fr-FR'), items: items, totalHT: totals.totalHT, tva: totals.tva, totalTTC: totals.ttc };
+
+            const docData = { entity: currentEntity, type: currentDocType, num: fullNum, client: client, date: new Date().toLocaleDateString('fr-FR'), items: items, totalHT: totals.totalHT, tva: totals.tva, totalTTC: totals.ttc };
+            
+            // 1. Enregistrer dans les Archives
             await fetch(ARCHIVE_URL, { method: 'POST', body: JSON.stringify(docData) });
-            fetchArchives(); generatePDF(docData); closeModal('doc');
+
+            // 2. Si c'est un BON DE COMMANDE -> Créer un Flux automatique
+            if(currentDocType === 'BON') {
+                const autoFlux = {
+                    entity: currentEntity,
+                    date: new Date().toISOString().split('T')[0],
+                    libelle: "ECF - " + currentEntity,
+                    tiers: client || "Client Inconnu",
+                    type: "SORTIE",
+                    mode: "Espèce",
+                    montant: totals.totalTTC
+                };
+                await fetch(FIREBASE_URL, { method: 'POST', body: JSON.stringify(autoFlux) });
+            }
+
+            fetchFirebase();
+            generatePDF(docData);
+            closeModal('doc');
         }
 
         function generatePDF(data) {
             const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            let label = data.type === 'BON' ? 'BON DE COMMANDE' : (data.type === 'REELLE' ? 'FACTURE REELLE' : 'FACTURE NORMALISEE');
             doc.setFont("helvetica", "bold").setFontSize(16);
-            doc.text(`${data.type === 'BON' ? 'BON DE COMMANDE' : 'FACTURE NORMALISEE'} N. ${data.num}`, 14, 70);
+            doc.text(`${label} N. ${data.num}`, 14, 70);
             doc.setFontSize(10).setFont("helvetica", "normal");
             doc.text(`STRUCTURE : ECF - ${data.entity}`, 14, 78);
             doc.text(`DESTINATAIRE : ${data.client.toUpperCase()}`, 14, 84);
             doc.text(`DATE : ${data.date}`, 14, 90);
             const rows = data.items.map(i => [i.name.toUpperCase(), i.qte, cleanFormat(i.pu), cleanFormat(i.qte * i.pu)]);
-            doc.autoTable({ startY: 100, head: [['DESIGNATION', 'QTE', 'P.U HT', 'TOTAL HT']], body: rows, headStyles: { fillColor: data.type === 'BON' ? [249, 115, 22] : [30, 41, 59] } });
+            doc.autoTable({ startY: 100, head: [['DESIGNATION', 'QTE', 'P.U HT', 'TOTAL HT']], body: rows, headStyles: { fillColor: [40, 40, 40] } });
             const finalY = doc.lastAutoTable.finalY + 10;
             doc.setFontSize(10).setFont("helvetica", "bold");
-            doc.text(`TOTAL HT : ${cleanFormat(data.totalHT)} FCFA`, 120, finalY);
-            doc.text(`TVA (18%) : ${cleanFormat(data.tva)} FCFA`, 120, finalY + 7);
-            doc.setFontSize(12).text(`NET A PAYER (TTC) : ${cleanFormat(data.totalTTC)} FCFA`, 120, finalY + 17);
+            doc.text(`TOTAL HT : ${cleanFormat(data.totalHT)} FCFA`, 110, finalY);
+            doc.text(`TVA (18%) : ${cleanFormat(data.tva)} FCFA`, 110, finalY + 7);
+            doc.setFontSize(12).text(`NET A PAYER (TTC) : ${cleanFormat(data.totalTTC)} FCFA`, 110, finalY + 17);
             doc.save(`${data.type}_${data.num}.pdf`);
         }
 
@@ -226,7 +252,6 @@
             currentEntity = e; 
             document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active-entity', b.id === 'tab-'+e)); 
             fetchFirebase(); 
-            if(!document.getElementById('section-archives').classList.contains('hidden')) fetchArchives(); 
         }
 
         async function fetchFirebase() {
@@ -239,8 +264,7 @@
             if(prompt("ADMIN PASS?") !== ADMIN_PASS) return;
             const entry = { entity: currentEntity, date: document.getElementById('f_date').value, libelle: document.getElementById('f_lib').value, tiers: document.getElementById('f_tiers').value, type: document.getElementById('f_type').value, mode: document.getElementById('f_mode').value, montant: parseFloat(document.getElementById('f_mt').value) || 0 };
             await fetch(FIREBASE_URL, { method: 'POST', body: JSON.stringify(entry) });
-            closeModal('entry');
-            fetchFirebase();
+            closeModal('entry'); fetchFirebase();
         }
 
         function render() {
@@ -254,10 +278,19 @@
         }
 
         async function deleteTx(id) { if(prompt("PASS?") === ADMIN_PASS) { await fetch(FIREBASE_URL.replace('.json', '/') + id + '.json', { method: 'DELETE' }); fetchFirebase(); } }
-        function setupYears() { const s = document.getElementById('filterYear'); for(let y=2000; y<=2500; y++){ let o = document.createElement('option'); o.value=y; o.text="EXERCICE "+y; if(y==new Date().getFullYear()) o.selected=true; s.add(o); } updateDocPrefix(); }
+
+        function setupYears() {
+            const s = document.getElementById('filterYear');
+            for(let y=2020; y<=2030; y++){
+                let o = document.createElement('option'); o.value=y; o.text="EXERCICE "+y;
+                if(y==new Date().getFullYear()) o.selected=true;
+                s.add(o);
+            }
+            updateDocPrefix();
+        }
         
-        setupYears(); 
-        document.getElementById('f_date').valueAsDate = new Date(); 
+        setupYears();
+        document.getElementById('f_date').valueAsDate = new Date();
         fetchFirebase();
     </script>
 </body>
