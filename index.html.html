@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ECF Groupe | Gestion Multi-Structure</title>
+    <title>ECF Groupe | ERP Multi-Structure</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; transition: background 0.3s ease; }
+        body { font-family: 'Segoe UI', sans-serif; transition: all 0.3s ease; }
         .excel-table { width: 100%; border-collapse: collapse; background: white; }
         .excel-table th { padding: 12px; font-size: 10px; text-transform: uppercase; text-align: left; color: white; }
         .excel-table td { border: 1px solid #e2e8f0; padding: 10px; font-size: 13px; }
         
+        /* Thèmes par Structure */
         .theme-BIOMED { --primary: #2563eb; --bg: #f8fafc; }
         .theme-BUREAU { --primary: #059669; --bg: #f0fdf4; }
         .theme-AUTO { --primary: #ea580c; --bg: #fff7ed; }
@@ -35,44 +36,43 @@
             <nav class="flex gap-6">
                 <button onclick="switchInterface('BIOMED')" id="nav-BIOMED" class="text-[10px] uppercase opacity-60 hover:opacity-100 transition-all active-tab pb-1">Biomédical</button>
                 <button onclick="switchInterface('BUREAU')" id="nav-BUREAU" class="text-[10px] uppercase opacity-60 hover:opacity-100 transition-all pb-1">Fournitures & Info</button>
-                <button onclick="switchInterface('AUTO')" id="nav-AUTO" class="text-[10px] uppercase opacity-60 hover:opacity-100 transition-all pb-1">Import Automobile</button>
+                <button onclick="switchInterface('AUTO')" id="nav-AUTO" class="text-[10px] uppercase opacity-60 hover:opacity-100 transition-all pb-1">Vente Automobile</button>
             </nav>
         </div>
         
         <div class="flex gap-4 items-center bg-slate-800 p-2 rounded-xl">
             <div class="text-right pr-4 border-r border-slate-700">
-                <p class="text-[8px] uppercase text-slate-400">Total Sorties</p>
-                <p id="totalAchats" class="text-red-400 font-mono font-bold text-sm">0 F</p>
+                <p class="text-[8px] uppercase text-slate-400 font-bold">Sorties</p>
+                <p id="totalAchats" class="text-red-400 font-mono font-bold">0 F</p>
             </div>
             <div class="text-right pr-4">
-                <p class="text-[8px] uppercase text-slate-400">Total Entrées</p>
-                <p id="totalVentes" class="text-emerald-400 font-mono font-bold text-sm">0 F</p>
+                <p class="text-[8px] uppercase text-slate-400 font-bold">Entrées</p>
+                <p id="totalVentes" class="text-emerald-400 font-mono font-bold">0 F</p>
             </div>
-            <div class="bg-slate-950 px-4 py-2 rounded-lg border border-structure min-w-[150px] text-right">
-                <p class="text-[8px] uppercase text-structure font-bold">Solde de Caisse</p>
-                <p id="totalMarge" class="text-white font-mono font-black text-lg">0 F</p>
+            <div class="bg-slate-950 px-4 py-2 rounded-lg border-2 border-structure min-w-[160px] text-right">
+                <p id="totalMarge" class="text-white font-mono font-black text-lg">0 FCFA</p>
             </div>
         </div>
     </header>
 
     <section class="bg-white border-b shadow-sm p-3 flex flex-wrap justify-between items-center px-8 gap-4">
         <div class="flex flex-wrap gap-2 items-center">
-            <button onclick="openModal('entry')" class="bg-structure text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-md"><i class="fas fa-plus-circle mr-1"></i> Flux Manuel</button>
+            <button onclick="openModal('entry')" class="bg-structure text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-md hover:brightness-110"><i class="fas fa-plus-circle mr-1"></i> Nouveau Flux</button>
             <div class="h-8 w-px bg-slate-200 mx-2"></div>
             
             <div id="extra-docs" class="flex gap-2">
-                <button onclick="openModalDoc('BON')" class="bg-amber-500 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm"><i class="fas fa-shopping-cart mr-1"></i> Bon de Commande</button>
-                <button onclick="openModalDoc('FACTURE_NORM')" class="bg-slate-800 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm"><i class="fas fa-file-invoice mr-1"></i> Facture Normalisée</button>
-                <button onclick="openModalDoc('FACTURE_REEL')" class="bg-indigo-600 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm"><i class="fas fa-receipt mr-1"></i> Facture Réelle</button>
+                <button onclick="openModalDoc('BON')" class="bg-amber-500 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm">Bon de Commande</button>
+                <button onclick="openModalDoc('FACTURE_NORM')" class="bg-slate-800 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm">Facture Normalisée</button>
+                <button onclick="openModalDoc('FACTURE_REEL')" class="bg-indigo-600 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm">Facture Réelle</button>
             </div>
 
             <div id="auto-docs" class="hidden flex gap-2">
-                <button onclick="openModalDoc('VENTE_AUTO')" class="bg-slate-800 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm"><i class="fas fa-car mr-1"></i> Facture de Vente Auto</button>
+                <button onclick="openModalDoc('VENTE_AUTO')" class="bg-slate-800 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm"><i class="fas fa-car mr-1"></i> Facture Vente Véhicule</button>
             </div>
 
             <div class="h-8 w-px bg-slate-200 mx-2"></div>
             <button onclick="showSection('archives')" class="border-structure text-structure border px-3 py-2 rounded text-[10px] font-bold uppercase">Archives</button>
-            <button onclick="showSection('compta')" class="text-slate-400 px-3 py-2 text-[10px] font-bold uppercase">Journal</button>
+            <button onclick="showSection('compta')" class="text-slate-400 px-3 py-2 text-[10px] font-bold uppercase">Journal de Caisse</button>
         </div>
 
         <div class="flex items-center gap-3">
@@ -81,29 +81,29 @@
                 <span>au</span>
                 <input type="date" id="dateFin" onchange="render()" class="bg-transparent outline-none">
             </div>
-            <select id="sortOption" onchange="render()" class="text-[10px] font-bold uppercase border p-2 rounded bg-white">
-                <option value="date_desc">Trier par : Récent</option>
-                <option value="mt_desc">Trier par : Montant (+)</option>
-                <option value="mt_asc">Trier par : Montant (-)</option>
+            <select id="sortOption" onchange="render()" class="text-[10px] font-bold border p-2 rounded bg-white">
+                <option value="date_desc">Plus récents</option>
+                <option value="mt_desc">Montant élevé</option>
+                <option value="mt_asc">Montant faible</option>
             </select>
             <select id="filterYear" onchange="updateDocPrefix(); fetchFirebase();" class="text-[10px] font-bold border p-2 rounded bg-slate-50"></select>
         </div>
     </section>
 
     <main class="flex-1 overflow-auto p-6">
-        <div id="section-compta" class="bg-white rounded-xl shadow-lg overflow-hidden border">
+        <div id="section-compta" class="bg-white rounded-xl shadow-xl overflow-hidden border">
             <table class="excel-table">
                 <thead class="bg-structure">
-                    <tr><th class="w-12 text-center">N°</th><th class="w-24">Date</th><th>Opération / Désignation</th><th>Tiers / Client</th><th class="w-24 text-center">Mode</th><th class="text-right w-32">Montant</th><th class="w-10"></th></tr>
+                    <tr><th class="w-12 text-center">N°</th><th class="w-24">Date</th><th>Désignation</th><th>Client / Tiers</th><th class="w-24 text-center">Paiement</th><th class="text-right w-32">Montant</th><th class="w-10"></th></tr>
                 </thead>
                 <tbody id="mainBody"></tbody>
             </table>
         </div>
 
-        <div id="section-archives" class="hidden bg-white rounded-xl shadow-lg overflow-hidden border">
+        <div id="section-archives" class="hidden bg-white rounded-xl shadow-xl overflow-hidden border">
             <table class="excel-table">
                 <thead class="bg-slate-700">
-                    <tr><th class="w-24">N° Pièce</th><th class="w-24">Date</th><th class="w-40">Type Doc</th><th>Bénéficiaire</th><th class="text-right w-32">Total TTC</th><th class="text-center w-24">Actions</th></tr>
+                    <tr><th>N° Doc</th><th>Date</th><th>Type</th><th>Client</th><th class="text-right">Total TTC</th><th class="text-center w-24">Actions</th></tr>
                 </thead>
                 <tbody id="archiveBody"></tbody>
             </table>
@@ -113,18 +113,18 @@
     <div id="modalDoc" class="fixed inset-0 bg-slate-900/80 hidden flex items-center justify-center z-[100] backdrop-blur-sm">
         <div class="bg-white w-[850px] max-h-[90vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden border-t-8 border-structure">
             <div class="p-5 bg-slate-50 border-b flex justify-between items-center">
-                <h2 id="docTitle" class="font-black text-structure uppercase tracking-tight">DOCUMENT</h2>
-                <button onclick="closeModal('doc')" class="text-slate-400 hover:text-red-500">✕</button>
+                <h2 id="docTitle" class="font-black text-structure uppercase">GÉNÉRATION DOCUMENT</h2>
+                <button onclick="closeModal('doc')" class="text-slate-400 text-xl">✕</button>
             </div>
             <div class="p-6 overflow-y-auto">
                 <div class="grid grid-cols-2 gap-6 mb-6">
                     <div>
-                        <label class="text-[9px] font-black text-slate-400 uppercase">Référence</label>
-                        <div class="flex"><input type="text" id="doc_prefix" class="w-12 bg-slate-100 p-2 rounded-l font-bold border-r text-center" readonly><input type="text" id="doc_suffix" class="flex-1 border p-2 rounded-r outline-none font-mono font-bold text-structure" placeholder="0000"></div>
+                        <label class="text-[9px] font-black text-slate-400 uppercase">Numéro de pièce</label>
+                        <div class="flex"><input type="text" id="doc_prefix" class="w-12 bg-slate-100 p-2 rounded-l font-bold border-r text-center" readonly><input type="text" id="doc_suffix" class="flex-1 border p-2 rounded-r outline-none font-mono font-bold text-structure" placeholder="0001"></div>
                     </div>
                     <div>
-                        <label class="text-[9px] font-black text-slate-400 uppercase">Client</label>
-                        <input type="text" id="doc_client" class="w-full border p-2 rounded outline-none focus:ring-1 ring-structure">
+                        <label class="text-[9px] font-black text-slate-400 uppercase">Nom du destinataire</label>
+                        <input type="text" id="doc_client" class="w-full border p-2 rounded outline-none">
                     </div>
                 </div>
                 <div class="border rounded-lg overflow-hidden mb-6">
@@ -132,35 +132,35 @@
                         <thead class="bg-slate-50 text-slate-500 uppercase text-[9px]"><tr><th class="text-left p-3">Désignation</th><th class="w-20 text-center">Qté</th><th class="w-32 text-right">P.U HT</th><th class="w-10"></th></tr></thead>
                         <tbody id="itemsList"></tbody>
                     </table>
-                    <button onclick="addItemLine()" class="m-3 text-structure font-bold text-[10px] uppercase">+ Ajouter une ligne</button>
+                    <button onclick="addItemLine()" class="m-3 text-structure font-bold text-[10px] uppercase">+ Ajouter un article / frais</button>
                 </div>
                 <div class="bg-slate-900 text-white p-5 rounded-xl ml-auto w-72 space-y-2">
-                    <div class="flex justify-between text-[10px] opacity-60"><span>Total HT</span><span id="res_ht">0 F</span></div>
-                    <div class="flex justify-between text-[10px] text-structure font-bold"><span>Taxes (18%)</span><span id="res_tva">0 F</span></div>
+                    <div class="flex justify-between text-[10px] opacity-60"><span>Sous-total HT</span><span id="res_ht">0 F</span></div>
+                    <div class="flex justify-between text-[10px] text-structure font-bold"><span>TVA (18%)</span><span id="res_tva">0 F</span></div>
                     <div class="flex justify-between text-lg font-black border-t border-slate-700 pt-2"><span>TOTAL TTC</span><span id="res_ttc">0 F</span></div>
                 </div>
             </div>
             <div class="p-6 bg-slate-50 border-t">
-                <button onclick="saveAndGeneratePDF()" class="w-full bg-structure text-white p-4 rounded-xl font-black uppercase tracking-widest shadow-lg">Valider & Imprimer</button>
+                <button onclick="saveAndGeneratePDF()" class="w-full bg-structure text-white p-4 rounded-xl font-black uppercase tracking-widest shadow-lg">Enregistrer & Imprimer</button>
             </div>
         </div>
     </div>
 
     <div id="modalEntry" class="fixed inset-0 bg-slate-900/80 hidden flex items-center justify-center z-[100]">
         <div class="bg-white w-[400px] rounded-2xl p-6 border-b-8 border-structure shadow-2xl">
-            <h3 class="font-black text-lg mb-4 text-slate-800 uppercase italic">Nouveau Flux</h3>
+            <h3 class="font-black text-lg mb-4 text-slate-800 uppercase italic">Opération Caisse</h3>
             <div class="space-y-3">
                 <input type="text" id="f_lib" placeholder="Libellé de l'opération" class="w-full border p-3 rounded-lg outline-none text-sm">
-                <input type="text" id="f_tiers" placeholder="Tiers / Intervenant" class="w-full border p-3 rounded-lg outline-none text-sm">
+                <input type="text" id="f_tiers" placeholder="Intervenant / Tiers" class="w-full border p-3 rounded-lg outline-none text-sm">
                 <div class="grid grid-cols-2 gap-3">
-                    <select id="f_type" class="border p-3 rounded-lg font-bold bg-slate-50 text-sm"><option value="ENTREE">RECETTE (+)</option><option value="SORTIE">DÉPENSE (-)</option></select>
+                    <select id="f_type" class="border p-3 rounded-lg font-bold bg-slate-50 text-sm"><option value="ENTREE">ENTRÉE (+)</option><option value="SORTIE">SORTIE (-)</option></select>
                     <input type="number" id="f_mt" placeholder="Montant" class="border p-3 rounded-lg font-black text-structure text-sm">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <select id="f_mode" class="border p-3 rounded-lg text-sm"><option>Espèce</option><option>Virement</option><option>Chèque</option></select>
                     <input type="date" id="f_date" class="border p-3 rounded-lg text-sm">
                 </div>
-                <button onclick="saveToFirebase()" class="w-full bg-structure text-white p-4 rounded-xl font-black uppercase text-xs shadow-md mt-4">Enregistrer</button>
+                <button onclick="saveToFirebase()" class="w-full bg-structure text-white p-4 rounded-xl font-black uppercase text-xs shadow-md mt-4">Confirmer</button>
             </div>
         </div>
     </div>
@@ -171,9 +171,17 @@
         const ADMIN_PASS = "ECF2026";
 
         const CATALOGUES = {
-            BIOMED: { "Anios Clean 5L": 12500, "Stéranios 5L": 18000, "Gants": 1500, "Sachet Poubelle": 3500 },
-            BUREAU: { "Ramette A4": 3500, "Encre HP": 15000, "Laptop": 350000, "Imprimante": 120000 },
-            AUTO: { "Berline Importée": 4500000, "SUV / 4x4": 8500000, "Frais Dédouanement": 1200000 }
+            BIOMED: {
+                "Anios Clean Excel D 5L": 0, "Stéranios 2% 5L": 0, "Désodorisant (Carton)": 0, "Surfanios 5L": 0,
+                "Gant de ménage (Unité)": 0, "Serpillère (Qualité)": 0, "Brouette": 0, "Acide Muriatique": 0,
+                "Sachet Poubelle 100L": 0, "OMO 1Kg": 0, "Eau de Javel 5L": 0, "Savon Liquide 5L": 0,
+                "Gel Hydroalcoolique 5L": 0, "Masque Chirurgical": 0, "Gants Jetables": 0, "Essuie-tout": 0
+            },
+            BUREAU: {
+                "Ramette Papier A4": 3500, "Cartouche Encre HP": 15000, "Stylo Bic (Carton)": 5500,
+                "Ordinateur Laptop": 350000, "Imprimante Laser": 120000, "Classeur": 2500
+            },
+            AUTO: {} // 100% Manuel
         };
 
         let currentEntity = "BIOMED";
@@ -185,16 +193,13 @@
             document.body.className = `theme-${entity} h-screen flex flex-col`;
             document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active-tab', b.id === `nav-${entity}`));
             
-            // Masquer ou afficher les options de facturation
             const extraDocs = document.getElementById('extra-docs');
             const autoDocs = document.getElementById('auto-docs');
             
             if(entity === 'AUTO') {
-                extraDocs.classList.add('hidden');
-                autoDocs.classList.remove('hidden');
+                extraDocs.classList.add('hidden'); autoDocs.classList.remove('hidden');
             } else {
-                extraDocs.classList.remove('hidden');
-                autoDocs.classList.add('hidden');
+                extraDocs.classList.remove('hidden'); autoDocs.classList.add('hidden');
             }
             fetchFirebase();
         }
@@ -203,22 +208,37 @@
 
         function addItemLine() {
             const tr = document.createElement('tr');
-            const items = CATALOGUES[currentEntity];
-            const options = Object.keys(items).map(i => `<option value="${i}">${i}</option>`).join('');
+            const items = CATALOGUES[currentEntity] || {};
+            const itemKeys = Object.keys(items);
+            
+            let optionsHtml = '<option value="">-- Sélectionner --</option>';
+            if (currentEntity === 'AUTO' || itemKeys.length === 0) {
+                optionsHtml = '<option value="SPECIAL">Saisie libre...</option>';
+            } else {
+                optionsHtml += itemKeys.map(i => `<option value="${i}">${i}</option>`).join('');
+                optionsHtml += '<option value="SPECIAL">AUTRE ARTICLE...</option>';
+            }
+            
             tr.innerHTML = `
                 <td class="p-2"><select class="w-full p-2 border rounded font-bold item-name" onchange="updatePrice(this)">
-                    <option value="">-- Choisir --</option>${options}<option value="SPECIAL">AUTRE...</option>
+                    ${optionsHtml}
                 </select></td>
                 <td class="p-2"><input type="number" class="w-full text-center font-bold item-qte" value="1" oninput="calculateDoc()"></td>
-                <td class="p-2"><input type="number" class="w-full text-right font-black text-structure item-pu" oninput="calculateDoc()"></td>
-                <td class="p-2 text-center"><button onclick="this.parentElement.parentElement.remove();calculateDoc()" class="text-red-200">✕</button></td>`;
+                <td class="p-2"><input type="number" class="w-full text-right font-black text-structure item-pu" value="0" oninput="calculateDoc()"></td>
+                <td class="p-2 text-center"><button onclick="this.parentElement.parentElement.remove();calculateDoc()" class="text-red-200 hover:text-red-500">✕</button></td>`;
             document.getElementById('itemsList').appendChild(tr);
+
+            if (currentEntity === 'AUTO') {
+                const select = tr.querySelector('.item-name');
+                select.value = "SPECIAL";
+                updatePrice(select);
+            }
         }
 
         function updatePrice(sel) {
             const tr = sel.closest('tr');
             if(sel.value === "SPECIAL") {
-                const custom = prompt("Désignation ?");
+                const custom = prompt("Libellé de l'article/véhicule ?");
                 const opt = document.createElement('option'); opt.value = custom; opt.text = custom; sel.add(opt); sel.value = custom;
                 tr.querySelector('.item-pu').value = 0;
             } else {
@@ -251,9 +271,12 @@
             const num = document.getElementById('doc_prefix').value + document.getElementById('doc_suffix').value;
             const flowType = (currentDocType === 'BON') ? "SORTIE" : "ENTREE";
             
+            const docData = { entity: currentEntity, type: currentDocType, num, client, date: new Date().toLocaleDateString('fr-FR'), totalTTC: calc.ttc };
+            await fetch(ARCHIVE_URL, { method: 'POST', body: JSON.stringify(docData) });
+
             await fetch(FIREBASE_URL, { method: 'POST', body: JSON.stringify({
                 entity: currentEntity, date: new Date().toISOString().split('T')[0],
-                libelle: currentDocType.replace('_',' ') + " " + num, tiers: client, type: flowType, montant: calc.ttc, mode: "Espèce"
+                libelle: currentDocType.replace('_',' ') + " " + num, tiers: client, type: flowType, montant: calc.ttc, mode: "Paiement"
             })});
 
             fetchFirebase(); closeModal('doc');
@@ -274,7 +297,6 @@
             const sort = document.getElementById('sortOption').value;
 
             let filtered = transactions.filter(t => t.entity === currentEntity && t.date.startsWith(year));
-            
             if(dD) filtered = filtered.filter(t => t.date >= dD);
             if(dF) filtered = filtered.filter(t => t.date <= dF);
 
@@ -285,20 +307,20 @@
             filtered.forEach((t, i) => {
                 const isE = t.type === 'ENTREE';
                 isE ? ven += Number(t.montant) : ach += Number(t.montant);
-                body.innerHTML += `<tr><td class="text-center opacity-30">${i+1}</td><td>${t.date}</td><td class="font-bold">${t.libelle.toUpperCase()}</td><td>${t.tiers}</td><td class="text-center text-[10px]">${t.mode}</td><td class="text-right font-black ${isE?'text-emerald-600':'text-red-500'}">${cleanFormat(t.montant)}</td><td><button onclick="deleteTx('${t.id}')">✕</button></td></tr>`;
+                body.innerHTML += `<tr><td class="text-center opacity-30">${i+1}</td><td>${t.date}</td><td class="font-bold uppercase text-[11px]">${t.libelle}</td><td>${t.tiers}</td><td class="text-center text-[10px]">${t.mode || 'Caisse'}</td><td class="text-right font-black ${isE?'text-emerald-600':'text-red-500'}">${cleanFormat(t.montant)}</td><td><button onclick="deleteTx('${t.id}')" class="text-slate-300 hover:text-red-500">✕</button></td></tr>`;
             });
             document.getElementById('totalAchats').innerText = cleanFormat(ach) + " F";
             document.getElementById('totalVentes').innerText = cleanFormat(ven) + " F";
-            document.getElementById('totalMarge').innerText = cleanFormat(ven - ach) + " F";
+            document.getElementById('totalMarge').innerText = cleanFormat(ven - ach) + " FCFA";
         }
 
-        async function deleteTx(id) { if(prompt("PASS ADMIN?") === ADMIN_PASS) { await fetch(FIREBASE_URL.replace('.json', '/') + id + '.json', { method: 'DELETE' }); fetchFirebase(); } }
+        async function deleteTx(id) { if(prompt("ADMIN PASS?") === ADMIN_PASS) { await fetch(FIREBASE_URL.replace('.json', '/') + id + '.json', { method: 'DELETE' }); fetchFirebase(); } }
         function openModal(id) { document.getElementById('modal' + id.charAt(0).toUpperCase() + id.slice(1)).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById('modal' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('hidden'); }
         function updateDocPrefix() { document.getElementById('doc_prefix').value = document.getElementById('filterYear').value.slice(-2); }
         
         async function saveToFirebase() {
-            if(prompt("PASS ADMIN?") !== ADMIN_PASS) return;
+            if(prompt("ADMIN PASS?") !== ADMIN_PASS) return;
             const entry = { entity: currentEntity, date: document.getElementById('f_date').value, libelle: document.getElementById('f_lib').value, tiers: document.getElementById('f_tiers').value, type: document.getElementById('f_type').value, mode: document.getElementById('f_mode').value, montant: Number(document.getElementById('f_mt').value) || 0 };
             await fetch(FIREBASE_URL, { method: 'POST', body: JSON.stringify(entry) });
             closeModal('entry'); fetchFirebase();
@@ -307,11 +329,24 @@
         function showSection(id) {
             document.getElementById('section-compta').classList.toggle('hidden', id !== 'compta');
             document.getElementById('section-archives').classList.toggle('hidden', id !== 'archives');
+            if(id === 'archives') fetchArchives();
+        }
+
+        async function fetchArchives() {
+            const res = await fetch(ARCHIVE_URL); const data = await res.json();
+            const body = document.getElementById('archiveBody'); body.innerHTML = '';
+            if(!data) return;
+            Object.keys(data).reverse().forEach(id => {
+                const a = data[id];
+                if(a.entity === currentEntity) {
+                    body.innerHTML += `<tr><td class="font-bold text-structure">${a.num}</td><td>${a.date}</td><td class="text-[10px] font-bold">${a.type}</td><td>${a.client}</td><td class="text-right font-black">${cleanFormat(a.totalTTC)}</td><td class="text-center"><i class="fas fa-file-pdf text-red-500"></i></td></tr>`;
+                }
+            });
         }
 
         const sY = document.getElementById('filterYear');
-        for(let y=2000; y<=2200; y++) {
-            let o = document.createElement('option'); o.value=y; o.text=y;
+        for(let y=2020; y<=2030; y++) {
+            let o = document.createElement('option'); o.value=y; o.text="EXERCICE "+y;
             if(y==new Date().getFullYear()) o.selected=true;
             sY.add(o);
         }
