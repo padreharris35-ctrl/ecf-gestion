@@ -3,26 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ECF Groupe | ERP Multi-Structure</title>
+    <title>ECF Groupe | Gestion Échéances Auto</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: 'Segoe UI', sans-serif; transition: all 0.3s ease; }
         .excel-table { width: 100%; border-collapse: collapse; background: white; }
         .excel-table th { padding: 12px; font-size: 10px; text-transform: uppercase; text-align: left; color: white; }
         .excel-table td { border: 1px solid #e2e8f0; padding: 10px; font-size: 13px; }
-        
         .theme-BIOMED { --primary: #2563eb; --bg: #f8fafc; }
-        .theme-BUREAU { --primary: #059669; --bg: #f0fdf4; }
         .theme-AUTO { --primary: #ea580c; --bg: #fff7ed; }
-
         .bg-structure { background-color: var(--primary); }
         .text-structure { color: var(--primary); }
-        .border-structure { border-color: var(--primary); }
         body { background-color: var(--bg); }
-        .active-tab { border-bottom: 4px solid white; font-weight: 900; opacity: 1 !important; }
         .hidden { display: none; }
     </style>
 </head>
@@ -32,8 +25,7 @@
         <div class="flex items-center gap-8">
             <h1 class="text-2xl font-black italic tracking-tighter">ECF<span class="text-structure ml-1 uppercase">Groupe</span></h1>
             <nav class="flex gap-6">
-                <button onclick="switchInterface('BIOMED')" id="nav-BIOMED" class="text-[10px] uppercase opacity-60 hover:opacity-100 active-tab pb-1">Biomédical</button>
-                <button onclick="switchInterface('BUREAU')" id="nav-BUREAU" class="text-[10px] uppercase opacity-60 hover:opacity-100 pb-1">Fournitures & Info</button>
+                <button onclick="switchInterface('BIOMED')" id="nav-BIOMED" class="text-[10px] uppercase opacity-60 hover:opacity-100 pb-1">Biomédical</button>
                 <button onclick="switchInterface('AUTO')" id="nav-AUTO" class="text-[10px] uppercase opacity-60 hover:opacity-100 pb-1">Vente Automobile</button>
             </nav>
         </div>
@@ -41,11 +33,11 @@
         <div class="flex gap-4 items-center bg-slate-800 p-2 rounded-xl">
             <div class="text-right pr-4 border-r border-slate-700">
                 <p class="text-[8px] uppercase text-slate-400 font-bold">Sorties</p>
-                <p id="totalAchats" class="text-red-400 font-mono font-bold">0 F</p>
+                <p id="totalAchats" class="text-red-400 font-mono font-bold text-sm">0 F</p>
             </div>
             <div class="text-right pr-4">
-                <p class="text-[8px] uppercase text-slate-400 font-bold">Entrées</p>
-                <p id="totalVentes" class="text-emerald-400 font-mono font-bold">0 F</p>
+                <p class="text-[8px] uppercase text-slate-400 font-bold">Encaissé Réel</p>
+                <p id="totalVentes" class="text-emerald-400 font-mono font-bold text-sm">0 F</p>
             </div>
             <div class="bg-slate-950 px-4 py-2 rounded-lg border-2 border-structure min-w-[160px] text-right">
                 <p id="totalMarge" class="text-white font-mono font-black text-lg">0 F</p>
@@ -53,32 +45,21 @@
         </div>
     </header>
 
-    <section class="bg-white border-b shadow-sm p-3 flex flex-wrap justify-between items-center px-8 gap-4">
-        <div class="flex flex-wrap gap-2 items-center">
-            <button onclick="openModal('entry')" class="bg-structure text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-md hover:brightness-110"><i class="fas fa-plus-circle mr-1"></i> Flux Manuel</button>
-            <div class="h-8 w-px bg-slate-200 mx-2"></div>
-            
-            <div id="extra-docs" class="flex gap-2">
-                <button onclick="openModalDoc('BON')" class="bg-amber-500 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm">Bon de Commande</button>
-                <button onclick="openModalDoc('FACTURE_NORM')" class="bg-slate-800 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm">Facture Normalisée</button>
-                <button onclick="openModalDoc('FACTURE_REEL')" class="bg-indigo-600 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm">Facture Réelle</button>
-            </div>
-
-            <div id="auto-docs" class="hidden flex gap-2">
-                <button onclick="openAutoVente()" class="bg-slate-800 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm"><i class="fas fa-car mr-1"></i> Nouvelle Vente Véhicule</button>
+    <section class="bg-white border-b shadow-sm p-3 flex justify-between items-center px-8">
+        <div class="flex gap-2">
+            <button onclick="openModal('entry')" class="bg-structure text-white px-4 py-2 rounded text-[10px] font-bold uppercase shadow-md"><i class="fas fa-plus mr-1"></i> Flux Manuel</button>
+            <div id="auto-docs" class="hidden flex gap-2 border-l pl-4">
+                <button onclick="openAutoVente()" class="bg-orange-600 text-white px-4 py-2 rounded text-[10px] font-bold uppercase shadow-sm"><i class="fas fa-car mr-1"></i> Nouvelle Vente</button>
             </div>
         </div>
-
-        <div class="flex items-center gap-3">
-            <select id="filterYear" onchange="fetchFirebase();" class="text-[10px] font-bold border p-2 rounded bg-slate-50"></select>
-        </div>
+        <select id="filterYear" onchange="fetchFirebase();" class="text-[10px] font-bold border p-2 rounded bg-slate-50"></select>
     </section>
 
     <main class="flex-1 overflow-auto p-6">
-        <div id="section-compta" class="bg-white rounded-xl shadow-xl border overflow-hidden">
+        <div class="bg-white rounded-xl shadow-xl border overflow-hidden">
             <table class="excel-table">
                 <thead class="bg-structure">
-                    <tr><th>N°</th><th>Date</th><th>Désignation</th><th>Client / Tiers</th><th class="text-right">Montant</th><th class="w-10"></th></tr>
+                    <tr><th>N°</th><th>Date</th><th>Désignation</th><th>Client</th><th>Suivi Paiement</th><th class="text-right">Déjà Encaissé</th><th class="w-24 text-center">Actions</th></tr>
                 </thead>
                 <tbody id="mainBody"></tbody>
             </table>
@@ -86,97 +67,32 @@
     </main>
 
     <div id="modalAuto" class="fixed inset-0 bg-slate-900/80 hidden flex items-center justify-center z-[110] backdrop-blur-sm">
-        <div class="bg-white w-[700px] rounded-2xl shadow-2xl overflow-hidden border-t-8 border-orange-600">
-            <div class="p-5 bg-slate-50 border-b flex justify-between">
-                <h2 class="font-black text-orange-600 uppercase italic">Contrat de Vente Véhicule</h2>
-                <button onclick="closeModal('auto')" class="text-slate-400">✕</button>
-            </div>
-            <div class="p-8 grid grid-cols-2 gap-4">
-                <div class="col-span-2">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Nom de l'Acheteur *</label>
-                    <input type="text" id="auto_client" class="w-full border p-2 rounded outline-none focus:ring-2 ring-orange-500">
+        <div class="bg-white w-[500px] rounded-2xl shadow-2xl overflow-hidden border-t-8 border-orange-600 p-6">
+            <h2 class="font-black text-orange-600 uppercase italic mb-4">Initialiser une Vente</h2>
+            <div class="space-y-4">
+                <input type="text" id="auto_client" placeholder="Nom de l'Acheteur" class="w-full border p-3 rounded">
+                <input type="text" id="auto_marque" placeholder="Marque & Modèle" class="w-full border p-3 rounded">
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" id="auto_prix" placeholder="Prix Total" class="border p-3 rounded font-bold">
+                    <input type="number" id="auto_acompte" placeholder="1er Versement" class="border p-3 rounded font-bold text-emerald-600">
                 </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Marque du Véhicule *</label>
-                    <input type="text" id="auto_marque" class="w-full border p-2 rounded outline-none">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">N° Châssis *</label>
-                    <input type="text" id="auto_chassis" class="w-full border p-2 rounded outline-none">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Couleur</label>
-                    <input type="text" id="auto_couleur" class="w-full border p-2 rounded outline-none">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Kilométrage</label>
-                    <input type="text" id="auto_km" class="w-full border p-2 rounded outline-none">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">État du véhicule</label>
-                    <select id="auto_etat" class="w-full border p-2 rounded outline-none font-bold">
-                        <option value="Occasion">Occasion</option>
-                        <option value="Neuf">Neuf</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Mode de Paiement *</label>
-                    <select id="auto_paiement" class="w-full border p-2 rounded outline-none">
-                        <option>Espèce</option><option>Virement</option><option>Chèque</option>
-                    </select>
-                </div>
-                <div class="bg-orange-50 p-4 rounded-xl col-span-2 grid grid-cols-3 gap-4 border border-orange-100">
-                    <div>
-                        <label class="text-[10px] font-bold text-orange-600 uppercase">Prix de Vente</label>
-                        <input type="number" id="auto_prix" oninput="calcAuto()" class="w-full border p-2 rounded font-black text-orange-700">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-orange-600 uppercase">Acompte</label>
-                        <input type="number" id="auto_acompte" oninput="calcAuto()" class="w-full border p-2 rounded font-black text-emerald-600">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-orange-600 uppercase">Solde restant</label>
-                        <input type="text" id="auto_solde" readonly class="w-full border p-2 rounded font-black bg-white text-red-600">
-                    </div>
-                </div>
-                <button onclick="saveVenteAuto()" class="col-span-2 bg-orange-600 text-white p-4 rounded-xl font-black uppercase shadow-lg mt-2">Valider & Imprimer Contrat</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modalDoc" class="fixed inset-0 bg-slate-900/80 hidden flex items-center justify-center z-[100]">
-        <div class="bg-white w-[800px] rounded-2xl shadow-2xl flex flex-col border-t-8 border-structure">
-            <div class="p-5 border-b flex justify-between"><h2 id="docTitle" class="font-black text-structure uppercase">DOCUMENT</h2><button onclick="closeModal('doc')">✕</button></div>
-            <div class="p-6">
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <input type="text" id="doc_client" placeholder="Client" class="border p-2 rounded outline-none">
-                    <input type="text" id="doc_suffix" placeholder="N° Pièce" class="border p-2 rounded outline-none">
-                </div>
-                <table class="w-full text-xs border rounded">
-                    <thead class="bg-slate-50 uppercase"><tr><th class="p-2 text-left">Désignation</th><th class="w-20 text-center">Qté</th><th class="w-32 text-right">P.U HT</th><th class="w-10"></th></tr></thead>
-                    <tbody id="itemsList"></tbody>
-                </table>
-                <button onclick="addItemLine()" class="mt-2 text-structure font-bold text-xs">+ Ajouter ligne</button>
-            </div>
-            <div class="p-6 bg-slate-900 text-white flex justify-between items-center rounded-b-2xl">
-                <span class="text-xl font-black">TOTAL TTC : <span id="res_ttc">0 F</span></span>
-                <button onclick="saveAndGeneratePDF()" class="bg-structure px-6 py-2 rounded font-bold uppercase">Enregistrer & PDF</button>
+                <button onclick="saveVenteAuto()" class="w-full bg-orange-600 text-white p-4 rounded-xl font-black uppercase">Créer le dossier de vente</button>
             </div>
         </div>
     </div>
 
     <div id="modalEntry" class="fixed inset-0 bg-slate-900/80 hidden flex items-center justify-center z-[100]">
         <div class="bg-white w-[400px] rounded-2xl p-6 border-b-8 border-structure shadow-2xl">
-            <h3 class="font-black text-lg mb-4 text-slate-800 uppercase italic">Opération Caisse</h3>
+            <h3 class="font-black text-lg mb-4 uppercase italic">Caisse Directe</h3>
             <div class="space-y-3">
-                <input type="text" id="f_lib" placeholder="Désignation" class="w-full border p-3 rounded-lg outline-none">
-                <input type="text" id="f_tiers" placeholder="Tiers" class="w-full border p-3 rounded-lg outline-none">
+                <input type="text" id="f_lib" placeholder="Libellé" class="w-full border p-3 rounded-lg">
+                <input type="text" id="f_tiers" placeholder="Tiers" class="w-full border p-3 rounded-lg">
                 <div class="grid grid-cols-2 gap-3">
-                    <select id="f_type" class="border p-3 rounded-lg font-bold"><option value="ENTREE">ENTRÉE (+)</option><option value="SORTIE">SORTIE (-)</option></select>
-                    <input type="number" id="f_mt" placeholder="Montant" class="border p-3 rounded-lg font-black text-structure">
+                    <select id="f_type" class="border p-3 rounded-lg font-bold"><option value="ENTREE">ENTRÉE</option><option value="SORTIE">SORTIE</option></select>
+                    <input type="number" id="f_mt" placeholder="Montant" class="border p-3 rounded-lg font-bold">
                 </div>
                 <input type="date" id="f_date" class="w-full border p-3 rounded-lg">
-                <button onclick="saveToFirebase()" class="w-full bg-structure text-white p-4 rounded-xl font-black uppercase text-xs shadow-md mt-4">Confirmer</button>
+                <button onclick="saveToFirebase()" class="w-full bg-structure text-white p-4 rounded-xl font-black uppercase">Confirmer</button>
             </div>
         </div>
     </div>
@@ -184,22 +100,12 @@
     <script>
         const FIREBASE_URL = "https://ecfcommerce-b3893-default-rtdb.firebaseio.com/data.json";
         const ADMIN_PASS = "ECF2026";
-        const { jsPDF } = window.jspdf;
-
-        const CATALOGUES = {
-            BIOMED: { "Anios Clean Excel D 5L": 0, "Stéranios 2% 5L": 0, "Désodorisant (Carton)": 0, "Surfanios 5L": 0, "Gant de ménage (Unité)": 0, "Brouette": 0 },
-            BUREAU: { "Ramette Papier A4": 3500, "Cartouche Encre HP": 15000, "Stylo Bic (Carton)": 5500, "Ordinateur Laptop": 350000 },
-            AUTO: {}
-        };
-
         let currentEntity = "BIOMED";
         let transactions = [];
 
         function switchInterface(entity) {
             currentEntity = entity;
             document.body.className = `theme-${entity} h-screen flex flex-col`;
-            document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active-tab', b.id === `nav-${entity}`));
-            document.getElementById('extra-docs').classList.toggle('hidden', entity === 'AUTO');
             document.getElementById('auto-docs').classList.toggle('hidden', entity !== 'AUTO');
             fetchFirebase();
         }
@@ -207,98 +113,38 @@
         function cleanFormat(num) { return Math.round(num || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
 
         function openAutoVente() { document.getElementById('modalAuto').classList.remove('hidden'); }
-        function calcAuto() {
-            const prix = Number(document.getElementById('auto_prix').value) || 0;
-            const acompte = Number(document.getElementById('auto_acompte').value) || 0;
-            document.getElementById('auto_solde').value = cleanFormat(prix - acompte) + " F";
-        }
 
         async function saveVenteAuto() {
-            const client = document.getElementById('auto_client').value;
-            const marque = document.getElementById('auto_marque').value;
-            const chassis = document.getElementById('auto_chassis').value;
-            const prix = Number(document.getElementById('auto_prix').value) || 0;
+            const prix = Number(document.getElementById('auto_prix').value);
             const acompte = Number(document.getElementById('auto_acompte').value) || 0;
-            const mode = document.getElementById('auto_paiement').value;
-
-            if(!client || !marque || !chassis || !prix) { alert("Veuillez remplir les champs obligatoires (*)"); return; }
-
-            // PDF Génération
-            const doc = new jsPDF();
-            doc.setFontSize(22); doc.setTextColor(234, 88, 12); doc.text("CONTRAT DE VENTE AUTOMOBILE", 105, 20, {align:'center'});
-            doc.setFontSize(10); doc.setTextColor(100); doc.text("ECF GROUPE - IMPORT AUTOMOBILE", 105, 28, {align:'center'});
-            
-            doc.autoTable({
-                startY: 40,
-                head: [['Désignation du champ', 'Informations Véhicule']],
-                body: [
-                    ['Acheteur', client],
-                    ['Véhicule', marque],
-                    ['N° Châssis', chassis],
-                    ['Couleur', document.getElementById('auto_couleur').value || 'N/A'],
-                    ['Kilométrage', document.getElementById('auto_km').value || 'N/A'],
-                    ['État', document.getElementById('auto_etat').value],
-                    ['Prix de Vente', cleanFormat(prix) + " F"],
-                    ['Acompte Versé', cleanFormat(acompte) + " F"],
-                    ['Solde à Payer', cleanFormat(prix-acompte) + " F"],
-                    ['Mode Paiement', mode]
-                ],
-                theme: 'striped', headStyles: {fillColor: [234, 88, 12]}
-            });
-            
-            doc.text("Fait à Abidjan, le " + new Date().toLocaleDateString(), 20, doc.lastAutoTable.finalY + 20);
-            doc.text("Signature Acheteur", 20, doc.lastAutoTable.finalY + 40);
-            doc.text("Signature Vendeur (ECF)", 150, doc.lastAutoTable.finalY + 40);
-            doc.save(`Contrat_Auto_${client}.pdf`);
-
             const entry = {
                 entity: 'AUTO', date: new Date().toISOString().split('T')[0],
-                libelle: `VENTE ${marque.toUpperCase()} (${chassis})`,
-                tiers: client, type: 'ENTREE', montant: prix, mode: mode
+                libelle: `VENTE ${document.getElementById('auto_marque').value.toUpperCase()}`,
+                tiers: document.getElementById('auto_client').value, type: 'ENTREE',
+                montant_total: prix, 
+                montant_encaisse: acompte, 
+                statut: (acompte >= prix) ? 'SOLDE' : 'EN_ATTENTE'
             };
             await fetch(FIREBASE_URL, { method: 'POST', body: JSON.stringify(entry) });
             closeModal('auto'); fetchFirebase();
         }
 
-        // --- Fonctions Bio & Bureau ---
-        function addItemLine() {
-            const tr = document.createElement('tr');
-            const items = CATALOGUES[currentEntity] || {};
-            let options = Object.keys(items).map(i => `<option value="${i}">${i}</option>`).join('');
-            tr.innerHTML = `
-                <td class="p-2"><select class="w-full p-2 border rounded font-bold item-name" onchange="updatePrice(this)"><option value="">-- Choisir --</option>${options}<option value="SPECIAL">AUTRE...</option></select></td>
-                <td class="p-2"><input type="number" class="w-full text-center item-qte" value="1" oninput="calculateDoc()"></td>
-                <td class="p-2"><input type="number" class="w-full text-right item-pu" value="0" oninput="calculateDoc()"></td>
-                <td class="p-2 text-center"><button onclick="this.parentElement.parentElement.remove();calculateDoc()">✕</button></td>`;
-            document.getElementById('itemsList').appendChild(tr);
-        }
+        async function ajouterEcheance(id) {
+            const montant = Number(prompt("Montant du nouveau versement (échéance) :"));
+            if(!montant || montant <= 0) return;
 
-        function updatePrice(sel) {
-            const tr = sel.closest('tr');
-            if(sel.value === "SPECIAL") {
-                const custom = prompt("Désignation ?");
-                const opt = document.createElement('option'); opt.value = custom; opt.text = custom; sel.add(opt); sel.value = custom;
-            } else {
-                tr.querySelector('.item-pu').value = CATALOGUES[currentEntity][sel.value] || 0;
+            const res = await fetch(FIREBASE_URL.replace('.json', '/') + id + '.json');
+            const data = await res.json();
+            
+            data.montant_encaisse = (data.montant_encaisse || 0) + montant;
+            
+            if(data.montant_encaisse >= data.montant_total) {
+                data.statut = 'SOLDE';
+                alert("Véhicule entièrement soldé !");
             }
-            calculateDoc();
-        }
 
-        function calculateDoc() {
-            let ht = 0;
-            const q = document.querySelectorAll('.item-qte'), p = document.querySelectorAll('.item-pu');
-            q.forEach((_, i) => ht += (Number(q[i].value) * Number(p[i].value)));
-            const ttc = ht * 1.18;
-            document.getElementById('res_ttc').innerText = cleanFormat(ttc) + " F";
-            return ttc;
-        }
-
-        async function saveAndGeneratePDF() {
-            const ttc = calculateDoc();
-            const client = document.getElementById('doc_client').value;
-            const entry = { entity: currentEntity, date: new Date().toISOString().split('T')[0], libelle: "FACTURE "+document.getElementById('doc_suffix').value, tiers: client, type: 'ENTREE', montant: ttc };
-            await fetch(FIREBASE_URL, { method: 'POST', body: JSON.stringify(entry) });
-            closeModal('doc'); fetchFirebase();
+            await fetch(FIREBASE_URL.replace('.json', '/') + id + '.json', { method: 'PUT', body: JSON.stringify(data) });
+            fetchFirebase();
         }
 
         async function fetchFirebase() {
@@ -312,33 +158,63 @@
             let ach = 0, ven = 0;
             const year = document.getElementById('filterYear').value;
             let filtered = transactions.filter(t => t.entity === currentEntity && t.date.startsWith(year));
+            
             filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
             filtered.forEach((t, i) => {
+                const encaissé = t.montant_encaisse || t.montant || 0;
                 const isE = t.type === 'ENTREE';
-                isE ? ven += Number(t.montant) : ach += Number(t.montant);
-                body.innerHTML += `<tr><td class="text-center opacity-30">${i+1}</td><td>${t.date}</td><td class="font-bold uppercase text-[11px]">${t.libelle}</td><td>${t.tiers}</td><td class="text-right font-black ${isE?'text-emerald-600':'text-red-500'}">${cleanFormat(t.montant)}</td><td><button onclick="deleteTx('${t.id}')">✕</button></td></tr>`;
+                isE ? ven += encaissé : ach += encaissé;
+
+                let badge = `<span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded font-bold">SOLDE COMPLET</span>`;
+                let btnEcheance = '';
+
+                if (t.statut === 'EN_ATTENTE') {
+                    const reste = t.montant_total - t.montant_encaisse;
+                    badge = `<span class="text-[10px] bg-orange-100 text-orange-600 px-2 py-1 rounded font-bold">RESTE: ${cleanFormat(reste)} F</span>`;
+                    btnEcheance = `<button onclick="ajouterEcheance('${t.id}')" title="Ajouter une échéance" class="bg-emerald-500 text-white w-8 h-8 rounded-full mr-2 hover:bg-emerald-600 transition-all"><i class="fas fa-hand-holding-usd"></i></button>`;
+                }
+
+                body.innerHTML += `
+                    <tr>
+                        <td class="opacity-30">${i+1}</td>
+                        <td>${t.date}</td>
+                        <td class="font-bold text-[11px] uppercase">${t.libelle}</td>
+                        <td class="text-slate-600 font-medium">${t.tiers}</td>
+                        <td>${badge}</td>
+                        <td class="text-right font-black ${isE?'text-emerald-600':'text-red-500'}">${cleanFormat(encaissé)} F</td>
+                        <td class="text-center flex justify-center items-center">
+                            ${btnEcheance}
+                            <button onclick="deleteTx('${t.id}')" class="text-slate-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
             });
+
             document.getElementById('totalAchats').innerText = cleanFormat(ach) + " F";
             document.getElementById('totalVentes').innerText = cleanFormat(ven) + " F";
             document.getElementById('totalMarge').innerText = cleanFormat(ven - ach) + " F";
         }
 
-        async function deleteTx(id) { if(prompt("PASS?") === ADMIN_PASS) { await fetch(FIREBASE_URL.replace('.json', '/') + id + '.json', { method: 'DELETE' }); fetchFirebase(); } }
+        async function deleteTx(id) { if(prompt("ADMIN PASS?") === ADMIN_PASS) { await fetch(FIREBASE_URL.replace('.json', '/') + id + '.json', { method: 'DELETE' }); fetchFirebase(); } }
         function openModal(id) { document.getElementById('modal' + id.charAt(0).toUpperCase() + id.slice(1)).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById('modal' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('hidden'); }
-        function openModalDoc(type) { document.getElementById('docTitle').innerText = type; document.getElementById('itemsList').innerHTML = ''; addItemLine(); openModal('doc'); }
+        function closeModal(id) { document.querySelectorAll('[id^="modal"]').forEach(m => m.classList.add('hidden')); }
+        
         async function saveToFirebase() {
-            if(prompt("ADMIN PASS?") !== ADMIN_PASS) return;
-            const entry = { entity: currentEntity, date: document.getElementById('f_date').value, libelle: document.getElementById('f_lib').value, tiers: document.getElementById('f_tiers').value, type: document.getElementById('f_type').value, montant: Number(document.getElementById('f_mt').value) || 0 };
+            const entry = { 
+                entity: currentEntity, 
+                date: document.getElementById('f_date').value, 
+                libelle: document.getElementById('f_lib').value.toUpperCase(), 
+                tiers: document.getElementById('f_tiers').value, 
+                type: document.getElementById('f_type').value, 
+                montant: Number(document.getElementById('f_mt').value) || 0 
+            };
             await fetch(FIREBASE_URL, { method: 'POST', body: JSON.stringify(entry) });
-            closeModal('entry'); fetchFirebase();
+            closeModal(); fetchFirebase();
         }
 
         const sY = document.getElementById('filterYear');
-        for(let y=2024; y<=2030; y++) {
+        for(let y=2025; y<=2030; y++) {
             let o = document.createElement('option'); o.value=y; o.text="EXERCICE "+y;
-            if(y==new Date().getFullYear()) o.selected=true;
-            sY.add(o);
+            if(y==new Date().getFullYear()) o.selected=true; sY.add(o);
         }
         document.getElementById('f_date').valueAsDate = new Date();
         switchInterface('BIOMED');
