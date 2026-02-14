@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ECF Groupe | Gestion Ventes & Créances</title>
+    <title>ECF Groupe | Gestion Intégrale</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
@@ -55,11 +55,19 @@
     <section class="bg-white border-b shadow-sm p-3 flex flex-wrap justify-between items-center px-8 gap-4">
         <div class="flex flex-wrap gap-2 items-center">
             <button onclick="openModal('entry')" class="bg-structure text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-md"><i class="fas fa-plus-circle mr-1"></i> Flux Manuel</button>
-            <div id="extra-docs" class="flex gap-2 border-l pl-4">
-                <button onclick="openModalDoc('FACTURE')" class="bg-slate-800 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm">Nouvelle Facture</button>
+            
+            <div id="standard-options" class="flex gap-2 border-l pl-4">
+                <button class="bg-slate-700 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm">Bon de Commande</button>
+                <button class="bg-slate-800 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm">Facture Normalisée</button>
+                <button class="bg-slate-900 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm">Facture Réelle</button>
+                <button class="border-2 border-slate-200 text-slate-500 px-3 py-2 rounded text-[10px] font-bold uppercase hover:bg-slate-50">Archives</button>
             </div>
-            <div id="auto-docs" class="hidden flex gap-2 border-l pl-4">
+
+            <div id="auto-options" class="hidden flex gap-2 border-l pl-4">
                 <button onclick="openAutoVente()" class="bg-orange-600 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm"><i class="fas fa-car mr-1"></i> Vente Véhicule</button>
+                <button class="bg-slate-800 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm">Contrat de Vente</button>
+                <button class="bg-slate-900 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm">Décharge</button>
+                <button class="border-2 border-slate-200 text-slate-500 px-3 py-2 rounded text-[10px] font-bold uppercase hover:bg-slate-50">Archives Auto</button>
             </div>
         </div>
         <select id="filterYear" onchange="fetchFirebase();" class="text-[10px] font-bold border p-2 rounded bg-slate-50"></select>
@@ -84,39 +92,38 @@
             </div>
             <div class="p-6 grid grid-cols-2 gap-4">
                 <div class="col-span-2"><label class="text-[10px] font-bold text-slate-400 uppercase">Acheteur *</label><input type="text" id="auto_client" class="w-full border p-2 rounded outline-none"></div>
-                <div><label class="text-[10px] font-bold text-slate-400 uppercase">Marque *</label><input type="text" id="auto_marque" class="w-full border p-2 rounded"></div>
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase">Marque / Modèle *</label><input type="text" id="auto_marque" class="w-full border p-2 rounded"></div>
                 <div><label class="text-[10px] font-bold text-slate-400 uppercase">N° Châssis *</label><input type="text" id="auto_chassis" class="w-full border p-2 rounded"></div>
                 <div><label class="text-[10px] font-bold text-slate-400 uppercase">Prix de Vente Total *</label><input type="number" id="auto_prix" oninput="calcAuto()" class="w-full border p-2 rounded font-bold"></div>
-                <div><label class="text-[10px] font-bold text-slate-400 uppercase">Acompte versé ce jour</label><input type="number" id="auto_acompte" oninput="calcAuto()" class="w-full border p-2 rounded font-bold text-emerald-600"></div>
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase">Acompte initial</label><input type="number" id="auto_acompte" oninput="calcAuto()" class="w-full border p-2 rounded font-bold text-emerald-600"></div>
                 <div class="col-span-2 bg-slate-50 p-3 rounded border text-center">
                     <p class="text-[10px] text-slate-500 uppercase">Reste à payer</p>
                     <p id="auto_solde_txt" class="text-xl font-black text-red-600">0 F</p>
                 </div>
-                <button onclick="saveVenteAuto()" class="col-span-2 bg-orange-600 text-white p-4 rounded-xl font-black uppercase shadow-lg">Enregistrer & Imprimer le Contrat</button>
+                <button onclick="saveVenteAuto()" class="col-span-2 bg-orange-600 text-white p-4 rounded-xl font-black uppercase shadow-lg">Enregistrer la vente</button>
             </div>
         </div>
     </div>
 
-    <div id="modalEntry" class="fixed inset-0 bg-slate-900/80 hidden flex items-center justify-center z-[100]">
+    <div id="modalEntry" class="fixed inset-0 bg-slate-900/80 hidden flex items-center justify-center z-[110]">
         <div class="bg-white w-[400px] rounded-2xl p-6 border-b-8 border-structure shadow-2xl">
             <h3 class="font-black text-lg mb-4 uppercase italic">Opération Caisse</h3>
             <div class="space-y-3">
-                <input type="text" id="f_lib" placeholder="Désignation" class="w-full border p-3 rounded-lg"><input type="text" id="f_tiers" placeholder="Tiers" class="w-full border p-3 rounded-lg">
+                <input type="text" id="f_lib" placeholder="Désignation" class="w-full border p-3 rounded-lg">
+                <input type="text" id="f_tiers" placeholder="Tiers" class="w-full border p-3 rounded-lg">
                 <div class="grid grid-cols-2 gap-3">
-                    <select id="f_type" class="border p-3 rounded-lg"><option value="ENTREE">ENTRÉE</option><option value="SORTIE">SORTIE</option></select>
+                    <select id="f_type" class="border p-3 rounded-lg font-bold"><option value="ENTREE">ENTRÉE</option><option value="SORTIE">SORTIE</option></select>
                     <input type="number" id="f_mt" placeholder="Montant" class="border p-3 rounded-lg font-bold">
                 </div>
                 <input type="date" id="f_date" class="w-full border p-3 rounded-lg">
-                <button onclick="saveToFirebase()" class="w-full bg-structure text-white p-4 rounded-xl font-black uppercase text-xs">Valider</button>
+                <button onclick="saveToFirebase()" class="w-full bg-structure text-white p-4 rounded-xl font-black uppercase">Valider</button>
             </div>
         </div>
-    </style>
     </div>
 
     <script>
         const FIREBASE_URL = "https://ecfcommerce-b3893-default-rtdb.firebaseio.com/data.json";
         const ADMIN_PASS = "ECF2026";
-        const { jsPDF } = window.jspdf;
 
         let currentEntity = "BIOMED";
         let transactions = [];
@@ -125,8 +132,11 @@
             currentEntity = entity;
             document.body.className = `theme-${entity} h-screen flex flex-col`;
             document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active-tab', b.id === `nav-${entity}`));
-            document.getElementById('extra-docs').classList.toggle('hidden', entity === 'AUTO');
-            document.getElementById('auto-docs').classList.toggle('hidden', entity !== 'AUTO');
+            
+            // Gestion de l'affichage des boutons spécifiques
+            document.getElementById('standard-options').classList.toggle('hidden', entity === 'AUTO');
+            document.getElementById('auto-options').classList.toggle('hidden', entity !== 'AUTO');
+            
             fetchFirebase();
         }
 
@@ -157,16 +167,18 @@
             closeModal('auto'); fetchFirebase();
         }
 
-        // FONCTION MODIFIÉE POUR LES ÉCHÉANCES
+        // --- NOUVELLE FONCTION POUR VERSEMENT PAR ÉCHÉANCE ---
         async function ajouterEcheance(id) {
-            const montant = Number(prompt("Montant du nouveau versement :"));
+            const montant = Number(prompt("Montant du nouveau versement (échéance) :"));
             if(!montant || montant <= 0) return;
 
             const res = await fetch(FIREBASE_URL.replace('.json', '/') + id + '.json');
             const data = await res.json();
             
+            // On ajoute le nouveau montant au montant déjà encaissé
             data.montant_encaisse = (Number(data.montant_encaisse) || 0) + montant;
             
+            // Si le total encaissé couvre le prix, on solde
             if(data.montant_encaisse >= data.montant_total) {
                 data.statut = 'SOLDE';
             }
@@ -193,14 +205,14 @@
                 const isE = t.type === 'ENTREE';
                 isE ? ven += encaissé : ach += encaissé;
 
-                let statutHTML = `<span class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500">PAYÉ</span>`;
+                let statutHTML = `<span class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500">SOLDE PAYÉ</span>`;
                 let actionHTML = `<button onclick="deleteTx('${t.id}')" class="text-slate-300 hover:text-red-500"><i class="fas fa-trash"></i></button>`;
 
                 if (t.statut === 'EN_ATTENTE') {
                     const reste = t.montant_total - t.montant_encaisse;
                     statutHTML = `<span class="text-[10px] bg-orange-100 px-2 py-1 rounded text-orange-600 font-bold">RESTE: ${cleanFormat(reste)} F</span>`;
-                    // BOUTON CHANGÉ ICI : ajouterEcheance au lieu de solderVente
-                    actionHTML = `<button onclick="ajouterEcheance('${t.id}')" class="text-emerald-500 hover:scale-110 mr-3"><i class="fas fa-plus-circle"></i> Échéance</button> ${actionHTML}`;
+                    // Utilisation de la nouvelle fonction pour ajouter des échéances
+                    actionHTML = `<button onclick="ajouterEcheance('${t.id}')" class="text-emerald-500 hover:scale-110 mr-3 font-bold text-[11px]"><i class="fas fa-hand-holding-usd"></i> + Versement</button> ${actionHTML}`;
                 }
 
                 body.innerHTML += `
@@ -220,13 +232,21 @@
             document.getElementById('totalMarge').innerText = cleanFormat(ven - ach) + " F";
         }
 
-        async function deleteTx(id) { if(prompt("PASS?") === ADMIN_PASS) { await fetch(FIREBASE_URL.replace('.json', '/') + id + '.json', { method: 'DELETE' }); fetchFirebase(); } }
+        async function deleteTx(id) { if(prompt("ADMIN PASS?") === ADMIN_PASS) { await fetch(FIREBASE_URL.replace('.json', '/') + id + '.json', { method: 'DELETE' }); fetchFirebase(); } }
         function openModal(id) { document.getElementById('modal' + id.charAt(0).toUpperCase() + id.slice(1)).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById('modal' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('hidden'); }
+        function closeModal(id) { document.querySelectorAll('[id^="modal"]').forEach(m => m.classList.add('hidden')); }
+        
         async function saveToFirebase() {
-            const entry = { entity: currentEntity, date: document.getElementById('f_date').value, libelle: document.getElementById('f_lib').value, tiers: document.getElementById('f_tiers').value, type: document.getElementById('f_type').value, montant: Number(document.getElementById('f_mt').value) || 0 };
+            const entry = { 
+                entity: currentEntity, 
+                date: document.getElementById('f_date').value, 
+                libelle: document.getElementById('f_lib').value.toUpperCase(), 
+                tiers: document.getElementById('f_tiers').value, 
+                type: document.getElementById('f_type').value, 
+                montant: Number(document.getElementById('f_mt').value) || 0 
+            };
             await fetch(FIREBASE_URL, { method: 'POST', body: JSON.stringify(entry) });
-            closeModal('entry'); fetchFirebase();
+            closeModal(); fetchFirebase();
         }
 
         const sY = document.getElementById('filterYear');
