@@ -25,7 +25,6 @@
             <nav class="flex gap-4 text-[10px] font-bold text-slate-400">
                 <button onclick="switchEntity('BIOMED')" id="tab-BIOMED" class="py-2 px-1 transition-all active-entity uppercase">Matériels Biomédicaux</button>
                 <button onclick="switchEntity('BUREAU')" id="tab-BUREAU" class="py-2 px-1 transition-all uppercase">Fournitures & Informatique</button>
-                <button onclick="switchEntity('VEHICULE')" id="tab-VEHICULE" class="py-2 px-1 transition-all uppercase">Vente de Véhicules</button>
             </nav>
         </div>
 
@@ -43,15 +42,15 @@
         
         <div class="flex gap-4 items-center">
             <div class="text-right">
-                <p class="text-[9px] uppercase text-slate-400 font-bold">Achats / Dépenses</p>
+                <p class="text-[9px] uppercase text-slate-400 font-bold">Achats</p>
                 <p id="totalAchats" class="text-red-400 font-mono font-bold">0 F</p>
             </div>
             <div class="text-right border-l border-slate-700 pl-4">
-                <p class="text-[9px] uppercase text-slate-400 font-bold">Ventes / Recettes</p>
+                <p class="text-[9px] uppercase text-slate-400 font-bold">Ventes</p>
                 <p id="totalVentes" class="text-emerald-400 font-mono font-bold">0 F</p>
             </div>
             <div class="bg-slate-900 px-4 py-1 rounded border border-blue-900/50 text-right min-w-[140px]">
-                <p class="text-[9px] uppercase text-blue-400 font-bold">Trésorerie Actuelle</p>
+                <p class="text-[9px] uppercase text-blue-400 font-bold">Bénéfice Net</p>
                 <p id="totalMarge" class="text-white font-mono font-black text-lg">0 FCFA</p>
             </div>
         </div>
@@ -60,7 +59,6 @@
     <nav class="bg-white border-b p-3 flex flex-wrap gap-2 justify-between items-center px-6">
         <div class="flex flex-wrap gap-2">
             <button onclick="openModal('entry')" class="bg-blue-600 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm"><i class="fas fa-plus mr-1"></i> Flux Manuel</button>
-            <button id="btn-vehicule-ui" onclick="openModal('vehicule')" class="bg-emerald-600 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm hidden"><i class="fas fa-car mr-1"></i> Vente Véhicule</button>
             <button onclick="openModalDoc('BON')" class="bg-orange-500 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm"><i class="fas fa-shopping-cart mr-1"></i> Bon de Commande</button>
             <button onclick="openModalDoc('FACTURE')" class="bg-slate-800 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm"><i class="fas fa-file-invoice-dollar mr-1"></i> Facture Normale</button>
             <button onclick="openModalDoc('REELLE')" class="bg-indigo-700 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm"><i class="fas fa-receipt mr-1"></i> Facture Réelle</button>
@@ -77,7 +75,7 @@
         <div class="border rounded-lg overflow-hidden bg-white shadow-sm">
             <table class="excel-table">
                 <thead>
-                    <tr><th class="w-12 text-center">Réf</th><th class="w-24">Date</th><th>Opération</th><th>Tiers / Acheteur</th><th class="w-28 text-center">Paiement</th><th class="text-right w-36">Encaissé (FCFA)</th><th class="w-10"></th></tr>
+                    <tr><th class="w-12 text-center">Réf</th><th class="w-24">Date</th><th>Opération</th><th>Tiers</th><th class="w-28 text-center">Paiement</th><th class="text-right w-36">Montant (FCFA)</th><th class="w-10"></th></tr>
                 </thead>
                 <tbody id="mainBody"></tbody>
             </table>
@@ -110,63 +108,6 @@
                 <input type="date" id="f_date" class="border p-3 rounded text-sm">
                 <button onclick="saveToFirebase()" class="col-span-2 bg-blue-600 text-white p-4 rounded font-bold uppercase text-[11px] shadow-lg">Valider le Flux</button>
                 <button onclick="closeModal('entry')" class="col-span-2 text-slate-400 text-[10px] font-bold uppercase text-center mt-1">Fermer</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modalVehicule" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-[110] backdrop-blur-sm">
-        <div class="bg-white w-[650px] max-h-[95vh] overflow-y-auto rounded-lg shadow-2xl p-6 border-t-4 border-emerald-500">
-            <h3 class="font-black mb-4 uppercase text-slate-800 border-b pb-2 italic text-sm text-center">Dossier de Vente Véhicule</h3>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="col-span-2">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Acheteur (Obligatoire)</label>
-                    <input type="text" id="v_acheteur" class="w-full border p-2 rounded text-sm outline-none focus:border-emerald-500">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Marque (Obligatoire)</label>
-                    <input type="text" id="v_marque" class="w-full border p-2 rounded text-sm outline-none">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">N° Châssis (Obligatoire)</label>
-                    <input type="text" id="v_chassis" class="w-full border p-2 rounded text-sm outline-none">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Couleur</label>
-                    <input type="text" id="v_couleur" class="w-full border p-2 rounded text-sm outline-none">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Kilométrage</label>
-                    <input type="number" id="v_km" class="w-full border p-2 rounded text-sm outline-none">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">État</label>
-                    <select id="v_etat" class="w-full border p-2 rounded text-sm bg-slate-50 font-bold">
-                        <option value="Occasion">Occasion</option>
-                        <option value="Neuf">Neuf</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Mode de Paiement</label>
-                    <select id="v_mode" class="w-full border p-2 rounded text-sm">
-                        <option>Espèce</option><option>Virement</option><option>Chèque</option>
-                    </select>
-                </div>
-                <div class="col-span-2 bg-slate-900 p-4 rounded-lg grid grid-cols-3 gap-4 mt-2">
-                    <div>
-                        <label class="text-[9px] font-bold text-blue-400 uppercase">Prix de Vente</label>
-                        <input type="number" id="v_prix" oninput="calcVehicule()" class="w-full bg-transparent text-white border-b border-slate-700 p-1 text-lg font-bold outline-none">
-                    </div>
-                    <div>
-                        <label class="text-[9px] font-bold text-emerald-400 uppercase">Acompte / Payé</label>
-                        <input type="number" id="v_acompte" oninput="calcVehicule()" class="w-full bg-transparent text-white border-b border-slate-700 p-1 text-lg font-bold outline-none">
-                    </div>
-                    <div>
-                        <label class="text-[9px] font-bold text-red-400 uppercase">Solde à payer</label>
-                        <div id="v_solde" class="text-white text-lg font-black pt-1">0 F</div>
-                    </div>
-                </div>
-                <button onclick="saveVehicule()" class="col-span-2 bg-emerald-600 text-white p-4 rounded font-bold uppercase text-[11px] shadow-lg mt-2">Enregistrer la Vente & l'Encaissement</button>
-                <button onclick="closeModal('vehicule')" class="col-span-2 text-slate-400 text-[10px] font-bold uppercase text-center">Annuler</button>
             </div>
         </div>
     </div>
@@ -242,51 +183,6 @@
         function openModal(id) { document.getElementById('modal' + id.charAt(0).toUpperCase() + id.slice(1)).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById('modal' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('hidden'); }
 
-        // --- Logique Véhicules ---
-        function calcVehicule() {
-            const p = parseFloat(document.getElementById('v_prix').value) || 0;
-            const a = parseFloat(document.getElementById('v_acompte').value) || 0;
-            document.getElementById('v_solde').innerText = cleanFormat(p - a) + " F";
-        }
-
-        async function saveVehicule() {
-            const ach = document.getElementById('v_acheteur').value;
-            const marq = document.getElementById('v_marque').value;
-            const chas = document.getElementById('v_chassis').value;
-            const pTotal = Number(document.getElementById('v_prix').value) || 0;
-            const acompte = Number(document.getElementById('v_acompte').value) || 0;
-
-            if(!ach || !marq || !chas || pTotal <= 0) {
-                alert("Veuillez remplir les champs obligatoires (*)");
-                return;
-            }
-
-            const entry = {
-                entity: "VEHICULE",
-                date: new Date().toISOString().split('T')[0],
-                libelle: `VENTE VEHICULE : ${marq.toUpperCase()} (CHASSIS: ${chas})`,
-                tiers: ach,
-                type: "ENTREE",
-                mode: document.getElementById('v_mode').value,
-                montant: acompte, // Seul l'acompte est comptabilisé en trésorerie
-                v_data: { // Métadonnées pour le suivi du solde
-                    prix_total: pTotal,
-                    acompte: acompte,
-                    chassis: chas,
-                    marque: marq,
-                    couleur: document.getElementById('v_couleur').value,
-                    km: document.getElementById('v_km').value,
-                    etat: document.getElementById('v_etat').value
-                }
-            };
-
-            await fetch(FIREBASE_URL, { method: 'POST', body: JSON.stringify(entry) });
-            closeModal('vehicule');
-            fetchFirebase();
-        }
-
-        // --- Fin Logique Véhicules ---
-
         function addItemLine() {
             const tr = document.createElement('tr');
             tr.className = "border-b border-slate-100";
@@ -327,7 +223,7 @@
         }
 
         async function saveAndGeneratePDF() {
-            const resultCalcul = calculateDoc();
+            const resultCalcul = calculateDoc(); // On capture le résultat exact ici
             const client = document.getElementById('doc_client').value || "Client Divers";
             const fullNum = document.getElementById('doc_prefix').value + document.getElementById('doc_suffix').value;
             const items = [];
@@ -353,7 +249,7 @@
                     tiers: client,
                     type: "SORTIE",
                     mode: "Espèce",
-                    montant: Number(resultCalcul.totalTTC)
+                    montant: Number(resultCalcul.totalTTC) // Utilisation du montant calculé
                 };
                 await fetch(FIREBASE_URL, { method: 'POST', body: JSON.stringify(autoFlux) });
             }
@@ -399,10 +295,6 @@
         function switchEntity(e) { 
             currentEntity = e; 
             document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active-entity', b.id === 'tab-'+e)); 
-            
-            // Afficher le bouton spécifique véhicule uniquement si l'entité est VEHICULE
-            document.getElementById('btn-vehicule-ui').classList.toggle('hidden', e !== 'VEHICULE');
-            
             fetchFirebase(); 
         }
 
@@ -436,19 +328,7 @@
             }).forEach((t, i) => {
                 const isE = t.type === 'ENTREE'; 
                 if(isE) ventes += (Number(t.montant) || 0); else achats += (Number(t.montant) || 0);
-                
-                // Affichage spécifique pour les véhicules (Solde)
-                let extraInfo = "";
-                if(t.entity === "VEHICULE" && t.v_data) {
-                    const solde = t.v_data.prix_total - t.montant;
-                    if(solde > 0) {
-                        extraInfo = `<div class="text-[10px] text-orange-600 font-bold uppercase mt-1">Reste à payer: ${cleanFormat(solde)} F</div>`;
-                    } else {
-                        extraInfo = `<div class="text-[10px] text-blue-600 font-bold uppercase mt-1 italic">Totalement Soldé</div>`;
-                    }
-                }
-
-                body.innerHTML += `<tr><td class="text-center opacity-30">${i+1}</td><td>${t.date}</td><td class="font-bold">${t.libelle.toUpperCase()}</td><td>${t.tiers || '-'}</td><td class="text-center text-[10px]">${t.mode}</td><td class="text-right font-black ${isE?'text-emerald-600':'text-red-500'}">${cleanFormat(t.montant)} ${extraInfo}</td><td class="text-center"><button onclick="deleteTx('${t.id}')">✕</button></td></tr>`;
+                body.innerHTML += `<tr><td class="text-center opacity-30">${i+1}</td><td>${t.date}</td><td class="font-bold">${t.libelle.toUpperCase()}</td><td>${t.tiers || '-'}</td><td class="text-center text-[10px]">${t.mode}</td><td class="text-right font-black ${isE?'text-emerald-600':'text-red-500'}">${cleanFormat(t.montant)}</td><td class="text-center"><button onclick="deleteTx('${t.id}')">✕</button></td></tr>`;
             });
             
             const marge = ventes - achats;
@@ -462,7 +342,7 @@
 
         function setupYears() {
             const s = document.getElementById('filterYear');
-            for(let y=2020; y<=2030; y++){
+            for(let y=2000; y<=2200; y++){
                 let o = document.createElement('option'); o.value=y; o.text="EXERCICE "+y;
                 if(y==new Date().getFullYear()) o.selected=true;
                 s.add(o);
@@ -476,3 +356,4 @@
     </script>
 </body>
 </html>
+
