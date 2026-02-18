@@ -2,358 +2,300 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ECF Commerce Général | Gestion & Marge</title>
+    <title>GROUPE ECF - Gestion Multi-Filiales</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f1f5f9; }
-        .excel-table { width: 100%; border-collapse: collapse; background: white; }
-        .excel-table th { background: #0f172a; color: white; padding: 12px; font-size: 11px; text-transform: uppercase; text-align: left; }
-        .excel-table td { border: 1px solid #e2e8f0; padding: 10px; font-size: 13px; color: #334155; }
-        .active-entity { border-bottom: 4px solid #3b82f6; color: #3b82f6 !important; font-weight: 800; }
-        .hidden { display: none; }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="h-screen flex flex-col">
+<body class="bg-slate-100 min-h-screen">
 
-    <header class="bg-[#0f172a] text-white p-4 flex flex-wrap justify-between items-center shadow-lg gap-4">
-        <div class="flex items-center gap-6">
-            <h1 class="text-2xl font-black italic tracking-tighter">ECF<span class="text-blue-500 text-sm ml-1 uppercase"> Commerce</span></h1>
-            <nav class="flex gap-4 text-[10px] font-bold text-slate-400">
-                <button onclick="switchEntity('BIOMED')" id="tab-BIOMED" class="py-2 px-1 transition-all active-entity uppercase">Matériels Biomédicaux</button>
-                <button onclick="switchEntity('BUREAU')" id="tab-BUREAU" class="py-2 px-1 transition-all uppercase">Fournitures & Informatique</button>
-            </nav>
-        </div>
-
-        <div class="flex items-center gap-2 bg-slate-800 p-2 rounded-lg border border-slate-700">
-            <div class="flex flex-col">
-                <label class="text-[8px] uppercase font-bold text-blue-400">Du</label>
-                <input type="date" id="dateDebut" onchange="render()" class="bg-transparent text-white text-xs outline-none">
+    <header id="headerApp" class="bg-blue-900 text-white p-6 shadow-xl transition-colors duration-500">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div>
+                <div class="flex items-center gap-4">
+                    <h1 id="appTitle" class="text-3xl font-black italic tracking-tighter">ECF BIOMEDICAUX</h1>
+                    <select id="switchStructure" onchange="changerStructure()" class="bg-white/10 border border-white/20 text-[10px] font-bold p-1 rounded uppercase outline-none">
+                        <option value="BIOMED" class="text-black">BIOMEDICAUX</option>
+                        <option value="COMMERCE" class="text-black">COMMERCE GENERAL</option>
+                    </select>
+                </div>
             </div>
-            <div class="flex flex-col border-l border-slate-600 pl-2">
-                <label class="text-[8px] uppercase font-bold text-blue-400">Au</label>
-                <input type="date" id="dateFin" onchange="render()" class="bg-transparent text-white text-xs outline-none">
-            </div>
-            <button onclick="resetDates()" class="text-slate-400 hover:text-white px-1"><i class="fas fa-sync-alt text-[10px]"></i></button>
-        </div>
-        
-        <div class="flex gap-4 items-center">
-            <div class="text-right">
-                <p class="text-[9px] uppercase text-slate-400 font-bold">Achats</p>
-                <p id="totalAchats" class="text-red-400 font-mono font-bold">0 F</p>
-            </div>
-            <div class="text-right border-l border-slate-700 pl-4">
-                <p class="text-[9px] uppercase text-slate-400 font-bold">Ventes</p>
-                <p id="totalVentes" class="text-emerald-400 font-mono font-bold">0 F</p>
-            </div>
-            <div class="bg-slate-900 px-4 py-1 rounded border border-blue-900/50 text-right min-w-[140px]">
-                <p class="text-[9px] uppercase text-blue-400 font-bold">Bénéfice Net</p>
-                <p id="totalMarge" class="text-white font-mono font-black text-lg">0 FCFA</p>
+            <div class="flex gap-8 text-right">
+                <div><p class="text-[9px] uppercase font-bold opacity-70">Recettes</p><p id="totalEntrees" class="text-xl font-mono font-black text-emerald-400">0 F</p></div>
+                <div><p class="text-[9px] uppercase font-bold opacity-70">Sorties</p><p id="totalSorties" class="text-xl font-mono font-black text-red-400">0 F</p></div>
+                <div class="border-l border-white/20 pl-8"><p class="text-[9px] uppercase font-bold opacity-70 text-blue-300">Bénéfice Net</p><p id="beneficeNet" class="text-xl font-mono font-black text-white">0 F</p></div>
             </div>
         </div>
     </header>
 
-    <nav class="bg-white border-b p-3 flex flex-wrap gap-2 justify-between items-center px-6">
-        <div class="flex flex-wrap gap-2">
-            <button onclick="openModal('entry')" class="bg-blue-600 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm"><i class="fas fa-plus mr-1"></i> Flux Manuel</button>
-            <button onclick="openModalDoc('BON')" class="bg-orange-500 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm"><i class="fas fa-shopping-cart mr-1"></i> Bon de Commande</button>
-            <button onclick="openModalDoc('FACTURE')" class="bg-slate-800 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm"><i class="fas fa-file-invoice-dollar mr-1"></i> Facture Normale</button>
-            <button onclick="openModalDoc('REELLE')" class="bg-indigo-700 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm"><i class="fas fa-receipt mr-1"></i> Facture Réelle</button>
-            <button onclick="showSection('archives')" class="bg-emerald-600 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm"><i class="fas fa-archive mr-1"></i> Archives</button>
-            <button onclick="showSection('compta')" class="bg-slate-500 text-white px-3 py-2 rounded text-[10px] font-bold uppercase shadow-sm">Trésorerie</button>
-        </div>
-        <div class="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase">
-            <span>Exercice</span>
-            <select id="filterYear" onchange="updateDocPrefix(); fetchFirebase();" class="border p-1 rounded bg-slate-50"></select>
+    <nav class="bg-white border-b sticky top-0 z-40 p-4 shadow-md">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex gap-2">
+                <button id="btnNouveau" onclick="openModal()" class="bg-red-600 text-white px-4 py-2 rounded font-black text-[10px] uppercase italic shadow-lg">Nouveau BL (Triple Doc)</button>
+                <button id="btnEncaissement" onclick="openEncaissement()" class="bg-sky-500 text-white px-4 py-2 rounded font-black text-[10px] uppercase italic shadow-lg">Encaissement</button>
+                <button id="btnCharges" onclick="openCharges()" class="bg-amber-500 text-white px-4 py-2 rounded font-black text-[10px] uppercase italic shadow-lg">Charges Mensuelles</button>
+            </div>
+            <div class="flex gap-6 text-[11px] font-black uppercase">
+                <button onclick="switchView('tresorerie')" id="navTreso" class="border-b-4 border-blue-700 pb-1">Mouvements</button>
+                <button onclick="switchView('archives')" id="navArch" class="text-slate-400 pb-1">Archives PDF</button>
+            </div>
+            <div class="flex gap-2 text-xs">
+                <button onclick="genererRapportCharges()" class="bg-slate-800 text-white px-3 py-1 rounded font-bold hover:bg-black transition text-[10px] uppercase">Rapport Charges PDF</button>
+                <select id="filtreMois" onchange="fetchData()" class="border p-1 rounded font-bold"><option value="">Tous les mois</option><option value="01">Janv</option><option value="02">Févr</option><option value="03">Mars</option><option value="04">Avril</option><option value="05">Mai</option><option value="06">Juin</option><option value="07">Juil</option><option value="08">Août</option><option value="09">Sept</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Déc</option></select>
+                <select id="filtreAnnee" onchange="fetchData()" class="border p-1 rounded font-bold"></select>
+            </div>
         </div>
     </nav>
 
-    <main id="section-compta" class="flex-1 overflow-auto p-6">
-        <div class="border rounded-lg overflow-hidden bg-white shadow-sm">
-            <table class="excel-table">
-                <thead>
-                    <tr><th class="w-12 text-center">Réf</th><th class="w-24">Date</th><th>Opération</th><th>Tiers</th><th class="w-28 text-center">Paiement</th><th class="text-right w-36">Montant (FCFA)</th><th class="w-10"></th></tr>
-                </thead>
-                <tbody id="mainBody"></tbody>
-            </table>
-        </div>
-    </main>
-
-    <main id="section-archives" class="flex-1 overflow-auto p-6 hidden">
-        <div class="border rounded-lg overflow-hidden bg-white shadow-sm">
-            <table class="excel-table">
-                <thead>
-                    <tr><th class="w-32">N° Doc</th><th class="w-32">Date</th><th class="w-40">Type</th><th>Client</th><th class="text-right w-36">Total TTC</th><th class="w-24 text-center">Actions</th></tr>
-                </thead>
-                <tbody id="archiveBody"></tbody>
-            </table>
-        </div>
-    </main>
-
-    <div id="modalEntry" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-[100]">
-        <div class="bg-white w-[500px] rounded-lg shadow-2xl p-6 border-t-4 border-blue-600">
-            <h3 class="font-black mb-4 uppercase text-slate-800 border-b pb-2 italic text-sm text-center">Nouveau Flux Trésorerie</h3>
-            <div class="grid grid-cols-2 gap-4">
-                <input type="text" id="f_lib" placeholder="Libellé" class="col-span-2 border p-3 rounded text-sm outline-none focus:ring-1 focus:ring-blue-500">
-                <input type="text" id="f_tiers" placeholder="Tiers" class="col-span-2 border p-3 rounded text-sm outline-none focus:ring-1 focus:ring-blue-500">
-                <select id="f_type" class="border p-3 rounded text-sm font-bold bg-slate-50">
-                    <option value="ENTREE">RECETTE (Vente +)</option>
-                    <option value="SORTIE">DÉPENSE (Achat -)</option>
-                </select>
-                <input type="number" id="f_mt" placeholder="Montant" class="border p-3 rounded text-sm font-bold text-blue-600">
-                <select id="f_mode" class="border p-3 rounded text-sm"><option>Espèce</option><option>Virement</option><option>Chèque</option><option>Mobile Money</option></select>
-                <input type="date" id="f_date" class="border p-3 rounded text-sm">
-                <button onclick="saveToFirebase()" class="col-span-2 bg-blue-600 text-white p-4 rounded font-bold uppercase text-[11px] shadow-lg">Valider le Flux</button>
-                <button onclick="closeModal('entry')" class="col-span-2 text-slate-400 text-[10px] font-bold uppercase text-center mt-1">Fermer</button>
-            </div>
+    <div class="max-w-7xl mx-auto px-6 pt-6">
+        <div id="containerGraph" class="bg-white p-4 rounded-xl shadow-sm h-64 mb-6 relative">
+            <canvas id="chartTreso"></canvas>
         </div>
     </div>
 
-    <div id="modalDoc" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-[100] backdrop-blur-sm">
-        <div class="bg-white w-[850px] max-h-[90vh] overflow-y-auto rounded-lg shadow-2xl p-6">
-            <div id="docHeaderColor" class="p-4 mb-4 text-white font-bold flex justify-between uppercase text-xs rounded">
-                <span id="docTitle">DOCUMENT</span>
-                <button onclick="closeModal('doc')">✕</button>
+    <main class="max-w-7xl mx-auto p-6 pt-0">
+        <div id="view-tresorerie" class="bg-white rounded-xl shadow overflow-hidden">
+            <table class="w-full text-left">
+                <thead id="tableHead" class="bg-slate-900 text-white text-[10px] uppercase">
+                    <tr><th class="p-4">Date</th><th class="p-4">Référence</th><th class="p-4">Client / Libellé</th><th class="p-4 text-right">Montant</th><th class="p-4 text-center">Nature</th><th class="p-4"></th></tr>
+                </thead>
+                <tbody id="tableTreso" class="divide-y text-sm font-bold"></tbody>
+            </table>
+        </div>
+        <div id="view-archives" class="hidden bg-white rounded-xl shadow overflow-hidden">
+            <table class="w-full text-left">
+                <thead class="bg-slate-700 text-white text-[10px] uppercase font-bold">
+                    <tr><th class="p-4">N° Doc</th><th class="p-4">Date</th><th class="p-4">Type</th><th class="p-4 text-right">Total TTC</th><th class="p-4 text-center">Action</th></tr>
+                </thead>
+                <tbody id="tableArchives" class="divide-y text-sm font-bold"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <div id="modalDoc" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden">
+            <div id="modalHeader" class="p-6 bg-red-600 text-white flex justify-between items-center">
+                <h2 class="text-xl font-black uppercase italic">Création Documents</h2>
+                <button onclick="closeModal()" class="text-2xl font-black">&times;</button>
             </div>
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Numérotation</label>
-                    <div class="flex">
-                        <input type="text" id="doc_prefix" class="w-12 border border-r-0 p-2 rounded-l bg-slate-200 font-bold text-center text-slate-700" readonly>
-                        <input type="text" id="doc_suffix" maxlength="4" placeholder="0000" class="flex-1 border p-2 rounded-r font-mono font-bold text-blue-600 outline-none">
+            <div class="p-8 grid grid-cols-2 gap-8">
+                <div class="col-span-2 grid grid-cols-3 gap-4">
+                    <div><label class="text-[10px] font-black text-slate-400 uppercase">Date d'émission *</label><input type="date" id="docDate" class="w-full border-2 p-3 rounded-xl font-bold outline-none"></div>
+                    <div><label class="text-[10px] font-black text-slate-400 uppercase">Client *</label><input type="text" id="docClient" class="w-full border-2 p-3 rounded-xl font-bold uppercase outline-none"></div>
+                    <div><label class="text-[10px] font-black text-slate-400 uppercase">Numéro (4 chiffres) *</label><div class="flex"><span id="docPrefix" class="bg-slate-100 border-2 border-r-0 p-3 font-black text-slate-700 rounded-l-xl"></span><input type="text" id="docNum" maxlength="4" class="w-full border-2 p-3 font-black rounded-r-xl outline-none"></div></div>
+                </div>
+                <div class="col-span-2 max-h-64 overflow-y-auto">
+                    <table class="w-full"><thead class="text-[10px] uppercase border-b text-slate-400"><tr><th class="text-left pb-2">Article</th><th class="w-20 pb-2 text-center">Qté</th><th class="w-32 text-right pb-2">P.U HT</th><th class="w-32 text-right pb-2">Total HT</th><th class="w-10"></th></tr></thead><tbody id="lignesDoc"></tbody></table>
+                    <button onclick="ajouterLigne()" class="mt-4 font-black text-blue-700 text-[10px] uppercase">+ Ajouter un article</button>
+                </div>
+                <div class="col-span-2 flex justify-end">
+                    <div class="w-80 bg-slate-900 text-white p-6 rounded-2xl text-right space-y-2">
+                        <div><p class="text-[9px] uppercase font-bold opacity-50">Total HT</p><p id="stHT" class="text-xl font-black text-white">0 F</p></div>
+                        <div class="border-t border-white/10 pt-2"><p class="text-[9px] uppercase font-bold opacity-50">TVA (18%)</p><p id="stTVA" class="text-xl font-black text-blue-400">0 F</p></div>
+                        <div class="border-t border-white/20 pt-2"><p class="text-[9px] uppercase font-bold opacity-50 mb-1">Total TTC</p><p id="stTTC" class="text-3xl font-black text-emerald-400">0 F</p></div>
                     </div>
                 </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Client / Destinataire</label>
-                    <input type="text" id="doc_client" class="w-full border p-2 rounded outline-none">
-                </div>
+                <button id="btnValiderDoc" onclick="validerTripleDoc()" class="col-span-2 bg-red-600 text-white p-5 rounded-xl font-black uppercase tracking-widest shadow-xl">Générer les documents</button>
             </div>
-            <div class="bg-slate-50 p-3 rounded border mb-4">
-                <table class="w-full text-xs">
-                    <thead><tr class="text-slate-400 uppercase text-[9px] border-b"><th class="text-left p-2">Désignation</th><th class="w-20 p-2 text-center">Qté</th><th class="w-32 p-2 text-right">P.U HT</th><th class="w-8"></th></tr></thead>
-                    <tbody id="itemsList"></tbody>
-                </table>
-                <button onclick="addItemLine()" class="mt-4 text-blue-600 text-[10px] font-bold uppercase">+ Ajouter un article</button>
-            </div>
-            <div class="bg-slate-900 text-white p-5 rounded-lg">
-                <div class="flex justify-between text-xs opacity-50 mb-1"><span>Base HT</span><span id="res_ht">0 FCFA</span></div>
-                <div class="flex justify-between text-xs text-blue-400 font-bold mb-3"><span>TVA (18%)</span><span id="res_tva">0 FCFA</span></div>
-                <div class="flex justify-between text-2xl font-black border-t border-slate-700 pt-3"><span>TOTAL TTC</span><span id="res_ttc">0 FCFA</span></div>
-            </div>
-            <button onclick="saveAndGeneratePDF()" id="btnGenDoc" class="w-full p-4 rounded-lg font-bold uppercase text-xs mt-4 text-white shadow-lg transition-transform active:scale-95">Valider, Archiver & Créer Flux</button>
         </div>
     </div>
 
+    <div id="modalCharges" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4 z-[70]">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
+            <div class="p-6 bg-amber-500 text-white flex justify-between items-center">
+                <h2 class="text-xl font-black uppercase italic">Charges Mensuelles</h2>
+                <button onclick="document.getElementById('modalCharges').classList.add('hidden')" class="text-2xl font-black">&times;</button>
+            </div>
+            <div class="p-8 space-y-4">
+                <div><label class="text-[10px] font-black text-slate-400 uppercase">Date de la dépense</label><input type="date" id="chargeDate" class="w-full border-2 p-3 rounded-xl font-bold outline-none mt-1"></div>
+                <div><label class="text-[10px] font-black text-slate-400 uppercase">Libellé (Loyer, Salaire...)</label><input type="text" id="chargeLabel" class="w-full border-2 p-3 rounded-xl font-bold outline-none mt-1 uppercase"></div>
+                <div><label class="text-[10px] font-black text-slate-400 uppercase">Montant Total F CFA</label><input type="number" id="chargeMontant" class="w-full border-2 p-3 rounded-xl font-bold outline-none mt-1 text-red-600 text-xl"></div>
+                <button onclick="validerCharge()" class="w-full bg-slate-900 text-white p-5 rounded-xl font-black uppercase mt-4 shadow-lg">Enregistrer la dépense</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalEncaissement" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4 z-[60]"><div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden"><div id="encaissementHeader" class="p-6 bg-sky-600 text-white flex justify-between items-center"><h2 class="text-xl font-black uppercase italic">Versement</h2><button onclick="document.getElementById('modalEncaissement').classList.add('hidden')" class="text-2xl font-black">&times;</button></div><div class="p-8"><label class="text-[10px] font-black text-slate-400 uppercase">Sélectionner BL</label><select id="selectBL" onchange="selectBLChange()" class="w-full border-2 p-4 rounded-xl font-bold mt-2 outline-none"></select><div id="detailsBL" class="mt-6 p-6 bg-slate-50 rounded-2xl hidden border-2 border-dashed border-sky-200 text-center"><p class="text-[10px] uppercase text-red-500 font-bold mb-1">Reste à payer</p><p id="resteDuLabel" class="text-4xl font-black text-slate-900 mb-6">0 F</p><input type="number" id="montantEncaisse" class="w-full border-b-2 border-sky-600 p-2 text-2xl font-black text-center outline-none"></div><button onclick="validerEncaissement()" class="w-full bg-sky-600 text-white p-5 rounded-xl font-black uppercase mt-8 shadow-lg">Valider</button></div></div></div>
+
     <script>
-        const FIREBASE_URL = "https://ecfcommerce-b3893-default-rtdb.firebaseio.com/data.json";
-        const ARCHIVE_URL = "https://ecfcommerce-b3893-default-rtdb.firebaseio.com/archives.json";
-        const ADMIN_PASS = "ECF2026";
+        const CONFIG = {
+            BIOMED: { title: "ECF BIOMEDICAUX", db: "https://ecfcommerce-b3893-default-rtdb.firebaseio.com/biomed_v3.json", color: "bg-blue-900", btn: "bg-red-600", nav: "border-blue-700", pdfHeader: [220, 38, 38], hasCatalogue: true },
+            COMMERCE: { title: "ECF COMMERCE GENERAL", db: "https://ecfcommerce-b3893-default-rtdb.firebaseio.com/commerce_v1.json", color: "bg-emerald-900", btn: "bg-emerald-600", nav: "border-emerald-700", pdfHeader: [5, 150, 105], hasCatalogue: true }
+        };
 
-        let currentEntity = "BIOMED";
-        let transactions = [];
-        let currentDocType = "BON";
-
-        const LISTE_BIOMED = ["Désodorisant 400 ml (carton)", "Anios clean excel D (bidon)", "Stéranios 2% bidon 5 L", "Surfanos", "Aseptanios AD 5 L", "Acide muriatique", "Grésil (carton)", "Gant de ménage", "Serpillères", "Raclettes", "Pelle à manche", "Balai à manche", "Balai à tête de loup", "Brousse à manche", "Brouettes", "Bottes pour les manœuvres", "Eponges végétales", "OMO sachet 1 Kg (sacs)", "Bras de robots", "Sachet de poubelle noir 100L (Paquet de 10)", "Sachet de poubelle bleu 100L (Paquet de 10)", "Sachet de poubelle noir 50L (Paquet de 10)", "Sachet de poubelle bleu 50L (Paquet de 10)"].sort();
-
-        function cleanFormat(num) { 
-            if(isNaN(num) || num === null) return "0";
-            return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " "); 
-        }
-
-        function updateDocPrefix() {
-            const year = document.getElementById('filterYear').value;
-            document.getElementById('doc_prefix').value = year.toString().slice(-2);
-        }
-
-        function resetDates() {
-            document.getElementById('dateDebut').value = '';
-            document.getElementById('dateFin').value = '';
-            render();
-        }
-
-        function showSection(id) {
-            document.getElementById('section-compta').classList.toggle('hidden', id !== 'compta');
-            document.getElementById('section-archives').classList.toggle('hidden', id !== 'archives');
-            if(id === 'archives') fetchArchives();
-        }
-
-        function openModal(id) { document.getElementById('modal' + id.charAt(0).toUpperCase() + id.slice(1)).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById('modal' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('hidden'); }
-
-        function addItemLine() {
-            const tr = document.createElement('tr');
-            tr.className = "border-b border-slate-100";
-            let inputHtml = currentEntity === "BIOMED" ? `<select class="w-full bg-transparent item-name p-2 outline-none font-bold text-slate-700 appearance-none"><option value="">-- Choisir --</option>${LISTE_BIOMED.map(m => `<option value="${m}">${m}</option>`).join('')}</select>` : `<input type="text" class="w-full bg-transparent p-2 item-name outline-none font-bold text-slate-700" placeholder="Désignation...">`;
-            tr.innerHTML = `<td class="p-1">${inputHtml}</td><td class="p-1"><input type="number" class="w-full text-center bg-transparent item-qte font-bold" value="1" oninput="calculateDoc()"></td><td class="p-1"><input type="number" class="w-full text-right bg-transparent font-bold item-pu text-blue-600" placeholder="0" oninput="calculateDoc()"></td><td class="p-1 text-center"><button onclick="this.parentElement.parentElement.remove();calculateDoc()" class="text-red-300">✕</button></td>`;
-            document.getElementById('itemsList').appendChild(tr);
-        }
-
-        function calculateDoc() {
-            let totalHT = 0;
-            const qtes = document.querySelectorAll('.item-qte'), pus = document.querySelectorAll('.item-pu');
-            qtes.forEach((_, i) => { 
-                const q = parseFloat(qtes[i].value) || 0;
-                const p = parseFloat(pus[i].value) || 0;
-                totalHT += (q * p); 
-            });
-            const tva = totalHT * 0.18;
-            const ttc = totalHT + tva;
-            document.getElementById('res_ht').innerText = cleanFormat(totalHT) + " FCFA";
-            document.getElementById('res_tva').innerText = cleanFormat(tva) + " FCFA";
-            document.getElementById('res_ttc').innerText = cleanFormat(ttc) + " FCFA";
-            return { totalHT, tva, totalTTC: ttc };
-        }
-
-        function openModalDoc(type) {
-            currentDocType = type;
-            updateDocPrefix();
-            document.getElementById('doc_suffix').value = "";
-            let title = "", color = "";
-            if(type === 'BON') { title = "BON DE COMMANDE (SORTIE FLUX)"; color = "bg-orange-500"; }
-            else if(type === 'FACTURE') { title = "FACTURE NORMALISÉE"; color = "bg-slate-800"; }
-            else { title = "FACTURE RÉELLE"; color = "bg-indigo-700"; }
-
-            document.getElementById('docTitle').innerText = title;
-            document.getElementById('docHeaderColor').className = `${color} p-4 mb-4 text-white font-bold flex justify-between uppercase text-xs rounded`;
-            document.getElementById('btnGenDoc').className = `w-full ${color} p-4 rounded-lg font-bold uppercase text-xs mt-4 text-white shadow-lg transition-transform active:scale-95`;
-            document.getElementById('itemsList').innerHTML = ''; addItemLine(); openModal('doc');
-        }
-
-        async function saveAndGeneratePDF() {
-            const resultCalcul = calculateDoc(); // On capture le résultat exact ici
-            const client = document.getElementById('doc_client').value || "Client Divers";
-            const fullNum = document.getElementById('doc_prefix').value + document.getElementById('doc_suffix').value;
-            const items = [];
-            document.querySelectorAll('#itemsList tr').forEach(tr => {
-                const name = tr.querySelector('.item-name').value;
-                if(name) items.push({ name: name, qte: tr.querySelector('.item-qte').value, pu: tr.querySelector('.item-pu').value });
-            });
-
-            const docData = { 
-                entity: currentEntity, type: currentDocType, num: fullNum, 
-                client: client, date: new Date().toLocaleDateString('fr-FR'), 
-                items: items, totalHT: resultCalcul.totalHT, 
-                tva: resultCalcul.tva, totalTTC: resultCalcul.totalTTC 
-            };
-            
-            await fetch(ARCHIVE_URL, { method: 'POST', body: JSON.stringify(docData) });
-
-            if(currentDocType === 'BON') {
-                const autoFlux = {
-                    entity: currentEntity,
-                    date: new Date().toISOString().split('T')[0],
-                    libelle: "ACHAT / BON - ECF " + currentEntity,
-                    tiers: client,
-                    type: "SORTIE",
-                    mode: "Espèce",
-                    montant: Number(resultCalcul.totalTTC) // Utilisation du montant calculé
-                };
-                await fetch(FIREBASE_URL, { method: 'POST', body: JSON.stringify(autoFlux) });
+        const CATALOGUES = {
+            BIOMED: { "Désodorisant 400 ml (carton)": [35000, 26000], "Anios clean excel D (bidon)": [8695, 4700], "Stéranios 2% bidon 5 L": [8880, 4800], "Surfanos": [65000, 4700], "Aseptanios AD 5 L": [8880, 4800], "Acide muriatique": [10175, 5500], "Grésil (carton)": [3145, 1700], "Gant de ménage": [8500, 5500], "Serpillères": [1500, 800], "Raclettes": [2000, 1000], "Pelle à manche": [3885, 2100], "Balai à manche": [2000, 1000], "Balai à tête de loup": [2000, 1000], "Brosse à manche": [4070, 2200], "Brouettes": [27750, 15000], "Bottes pour les manœuvres": [10175, 5500], "Eponges végétales": [600, 550], "OMO sachet 1 Kg (sacs)": [17000, 13000], "Bras de robos": [10730, 5800], "Sachet de poubelle noir 100L (Paquet de 10)": [2000, 1300], "Sachet de poubelle bleu 100L (Paquet de 10)": [2000, 1300], "Sachet de poubelle noir 50L (Paquet de 10)": [1600, 850], "Sachet de poubelle bleu 50L (Paquet de 10)": [1600, 850] },
+            COMMERCE: { 
+                "NASCO SPLIT 2CV/R-410/Virus Air Doctor/220V": [350000, 235000],
+                "NASCO SPLIT 1,5CV/R-410/Virus Air Doctor/220V": [250000, 195000],
+                "NASCO SPLIT 1CV/R-410/Virus Air Doctor/220V": [200000, 155000]
             }
+        };
 
-            fetchFirebase();
-            generatePDF(docData);
-            closeModal('doc');
+        let currentStr = "BIOMED"; let db = []; let myChart = null;
+
+        function changerStructure() {
+            currentStr = document.getElementById('switchStructure').value;
+            const c = CONFIG[currentStr];
+            document.getElementById('appTitle').innerText = c.title;
+            document.getElementById('headerApp').className = `${c.color} text-white p-6 shadow-xl transition-colors duration-500`;
+            document.getElementById('btnNouveau').className = `${c.btn} text-white px-4 py-2 rounded font-black text-[10px] uppercase italic shadow-lg`;
+            document.getElementById('modalHeader').className = `p-6 ${c.btn} text-white flex justify-between items-center`;
+            document.getElementById('btnValiderDoc').className = `col-span-2 ${c.btn} text-white p-5 rounded-xl font-black uppercase tracking-widest shadow-xl`;
+            fetchData();
         }
 
-        function generatePDF(data) {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF();
-            let label = data.type === 'BON' ? 'BON DE COMMANDE' : (data.type === 'REELLE' ? 'FACTURE REELLE' : 'FACTURE NORMALISEE');
-            doc.setFont("helvetica", "bold").setFontSize(16);
-            doc.text(`${label} N. ${data.num}`, 14, 70);
-            doc.setFontSize(10).setFont("helvetica", "normal");
-            doc.text(`STRUCTURE : ECF - ${data.entity}`, 14, 78);
-            doc.text(`DESTINATAIRE : ${data.client.toUpperCase()}`, 14, 84);
-            doc.text(`DATE : ${data.date}`, 14, 90);
-            const rows = data.items.map(i => [i.name.toUpperCase(), i.qte, cleanFormat(i.pu), cleanFormat(i.qte * i.pu)]);
-            doc.autoTable({ startY: 100, head: [['DESIGNATION', 'QTE', 'P.U HT', 'TOTAL HT']], body: rows, headStyles: { fillColor: [30, 41, 59] } });
-            const finalY = doc.lastAutoTable.finalY + 10;
-            doc.setFontSize(10).setFont("helvetica", "bold");
-            doc.text(`TOTAL HT : ${cleanFormat(data.totalHT)} FCFA`, 110, finalY);
-            doc.text(`TVA (18%) : ${cleanFormat(data.tva)} FCFA`, 110, finalY + 7);
-            doc.setFontSize(12).text(`NET A PAYER (TTC) : ${cleanFormat(data.totalTTC)} FCFA`, 110, finalY + 17);
-            doc.save(`${data.type}_${data.num}.pdf`);
+        function formatSimple(n) {
+            let val = Math.round(Math.abs(Number(n) || 0)).toString(); let res = ""; let count = 0;
+            for (let i = val.length - 1; i >= 0; i--) { res = val[i] + res; count++; if (count === 3 && i !== 0) { res = " " + res; count = 0; } }
+            return (n < 0 ? "-" : "") + res;
         }
 
-        async function fetchArchives() {
-            const res = await fetch(ARCHIVE_URL); const data = await res.json();
-            const body = document.getElementById('archiveBody'); body.innerHTML = '';
-            if(!data) return;
-            Object.keys(data).reverse().forEach(id => {
-                const a = data[id];
-                if(a.entity === currentEntity) {
-                    body.innerHTML += `<tr><td class="font-bold text-blue-600">${a.num}</td><td>${a.date}</td><td class="text-[10px] font-bold uppercase">${a.type}</td><td>${a.client}</td><td class="text-right font-black">${cleanFormat(a.totalTTC)}</td><td class="text-center"><button onclick='generatePDF(${JSON.stringify(a)})' class="text-blue-500 mr-2"><i class="fas fa-file-pdf"></i></button><button onclick="deleteArchive('${id}')" class="text-red-300">✕</button></td></tr>`;
+        async function fetchData() { try { const res = await fetch(CONFIG[currentStr].db); const data = await res.json(); db = data ? Object.keys(data).map(k => ({id: k, ...data[k]})) : []; render(); } catch (e) { console.error(e); } }
+
+        function updateChart(filteredData) {
+            const ctx = document.getElementById('chartTreso').getContext('2d');
+            const dailyData = {};
+            filteredData.forEach(r => {
+                const day = r.date.split('-')[2];
+                if (!dailyData[day]) dailyData[day] = { e: 0, s: 0 };
+                const mont = Number(r.totalTTC) || 0;
+                if (r.type === 'ENC') dailyData[day].e += mont;
+                if ((r.type === 'FP' && r.isCompte) || r.type === 'CHG') dailyData[day].s += mont;
+            });
+            const labels = Object.keys(dailyData).sort();
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels.map(l => "J-" + l),
+                    datasets: [
+                        { label: 'Recettes', data: labels.map(l => dailyData[l].e), backgroundColor: '#10b981', borderRadius: 4, barPercentage: 0.6 },
+                        { label: 'Sorties', data: labels.map(l => dailyData[l].s), backgroundColor: '#ef4444', borderRadius: 4, barPercentage: 0.6 }
+                    ]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: true, position: 'top', align: 'end', labels: { font: { size: 10, weight: 'bold' }, usePointStyle: true, boxWidth: 6 } }
+                    },
+                    scales: { 
+                        y: { beginAtZero: true, grid: { borderDash: [5, 5], color: '#e2e8f0' }, ticks: { font: { size: 9, weight: 'bold' } } }, 
+                        x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' } } } 
+                    }
                 }
             });
         }
 
-        async function deleteArchive(id) { if(prompt("PASS ADMIN?") === ADMIN_PASS) { await fetch(ARCHIVE_URL.replace('.json', '/') + id + '.json', { method: 'DELETE' }); fetchArchives(); } }
-
-        function switchEntity(e) { 
-            currentEntity = e; 
-            document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active-entity', b.id === 'tab-'+e)); 
-            fetchFirebase(); 
-        }
-
-        async function fetchFirebase() {
-            const res = await fetch(FIREBASE_URL); const data = await res.json();
-            transactions = data ? Object.keys(data).map(k => ({id: k, ...data[k]})) : [];
-            render();
-        }
-
-        async function saveToFirebase() {
-            if(prompt("ADMIN PASS?") !== ADMIN_PASS) return;
-            const entry = { entity: currentEntity, date: document.getElementById('f_date').value, libelle: document.getElementById('f_lib').value, tiers: document.getElementById('f_tiers').value, type: document.getElementById('f_type').value, mode: document.getElementById('f_mode').value, montant: Number(document.getElementById('f_mt').value) || 0 };
-            await fetch(FIREBASE_URL, { method: 'POST', body: JSON.stringify(entry) });
-            closeModal('entry'); fetchFirebase();
+        function genererRapportCharges() {
+            const m = document.getElementById('filtreMois').value;
+            const y = document.getElementById('filtreAnnee').value;
+            const charges = db.filter(r => r.type === 'CHG' && r.date.startsWith(y) && (m === '' || r.date.split('-')[1] === m));
+            if(charges.length === 0) return alert("Aucune charge trouvée pour cette période.");
+            const { jsPDF } = window.jspdf; const doc = new jsPDF(); const structure = CONFIG[currentStr].title;
+            const moisNom = m ? document.getElementById('filtreMois').options[document.getElementById('filtreMois').selectedIndex].text : "Année complète";
+            doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.text("RAPPORT DES CHARGES MENSUELLES", 105, 20, {align:'center'});
+            doc.setFontSize(10); doc.text(`STRUCTURE : ${structure}`, 20, 30); doc.text(`PÉRIODE : ${moisNom} ${y}`, 20, 36);
+            let total = 0; const rows = charges.map(c => { total += Number(c.totalTTC); return [c.date, c.num, c.client.toUpperCase(), formatSimple(c.totalTTC) + " F"]; });
+            doc.autoTable({ startY: 45, head: [['Date', 'Référence', 'Désignation de la Charge', 'Montant']], body: rows, theme: 'striped', headStyles: { fillColor: [245, 158, 11], textColor: [255, 255, 255] }, foot: [['', '', 'TOTAL DES CHARGES', formatSimple(total) + " F CFA"]], footStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' } });
+            doc.save(`Rapport_Charges_${currentStr}_${m}_${y}.pdf`);
         }
 
         function render() {
-            const body = document.getElementById('mainBody'); body.innerHTML = ''; 
-            let achats = 0; let ventes = 0;
-            const yearFilter = document.getElementById('filterYear').value;
-            const dDebut = document.getElementById('dateDebut').value;
-            const dFin = document.getElementById('dateFin').value;
-            
-            transactions.filter(t => {
-                const matchesEntity = t.entity === currentEntity;
-                const matchesYear = t.date.startsWith(yearFilter);
-                let matchesPeriod = true;
-                if(dDebut && t.date < dDebut) matchesPeriod = false;
-                if(dFin && t.date > dFin) matchesPeriod = false;
-                return matchesEntity && matchesYear && matchesPeriod;
-            }).forEach((t, i) => {
-                const isE = t.type === 'ENTREE'; 
-                if(isE) ventes += (Number(t.montant) || 0); else achats += (Number(t.montant) || 0);
-                body.innerHTML += `<tr><td class="text-center opacity-30">${i+1}</td><td>${t.date}</td><td class="font-bold">${t.libelle.toUpperCase()}</td><td>${t.tiers || '-'}</td><td class="text-center text-[10px]">${t.mode}</td><td class="text-right font-black ${isE?'text-emerald-600':'text-red-500'}">${cleanFormat(t.montant)}</td><td class="text-center"><button onclick="deleteTx('${t.id}')">✕</button></td></tr>`;
+            const m = document.getElementById('filtreMois').value; const y = document.getElementById('filtreAnnee').value;
+            const tBody = document.getElementById('tableTreso'); const aBody = document.getElementById('tableArchives');
+            tBody.innerHTML = ''; aBody.innerHTML = '';
+            let totalE = 0; let totalS = 0;
+            const filtered = db.filter(r => r.date.startsWith(y) && (m === '' || r.date.split('-')[1] === m));
+            updateChart(filtered);
+            filtered.reverse().forEach(r => {
+                const isEnc = (r.type === 'ENC'); const isS = (r.type === 'CHG' || (r.type === 'FP' && r.isCompte));
+                const mont = Number(r.totalTTC) || 0; if(isEnc) totalE += mont; if(isS) totalS += mont;
+                const col = isEnc ? "text-emerald-600" : (isS ? "text-red-500" : "text-blue-500");
+                const nature = r.type === 'CHG' ? 'CHARGE' : (isEnc ? 'ENC' : (r.isCompte ? 'SORTIE' : 'DOC'));
+                tBody.innerHTML += `<tr class="border-b"><td class="p-4 text-xs">${r.date}</td><td class="p-4 text-blue-700 font-black">${r.num}</td><td class="p-4 uppercase">${r.client}</td><td class="p-4 text-right ${col}">${formatSimple(mont)}</td><td class="p-4 text-center"><span class="text-[9px] border px-2 py-1 rounded-full ${col} border-current">${nature}</span></td><td class="p-4 text-center cursor-pointer text-slate-300" onclick="deleteRow('${r.id}')">✕</td></tr>`;
+                if(r.type !== 'ENC' && r.type !== 'CHG') aBody.innerHTML += `<tr class="border-b"><td class="p-4 font-black">${r.num}</td><td class="p-4 text-xs">${r.date}</td><td class="p-4 uppercase text-[9px]">${r.type}${r.isCompte?' CPTE':''}</td><td class="p-4 text-right">${formatSimple(mont)}</td><td class="p-4 text-center"><button onclick='reprintPDF(${JSON.stringify(r)})' class="bg-slate-800 text-white px-3 py-1 rounded text-[10px]">RE-PDF</button></td></tr>`;
             });
-            
-            const marge = ventes - achats;
-            document.getElementById('totalAchats').innerText = cleanFormat(achats) + " F";
-            document.getElementById('totalVentes').innerText = cleanFormat(ventes) + " F";
-            document.getElementById('totalMarge').innerText = cleanFormat(marge) + " FCFA";
-            document.getElementById('totalMarge').className = marge >= 0 ? "text-white font-mono font-black text-lg" : "text-red-500 font-mono font-black text-lg";
+            document.getElementById('totalEntrees').innerText = formatSimple(totalE) + " F";
+            document.getElementById('totalSorties').innerText = formatSimple(totalS) + " F";
+            document.getElementById('beneficeNet').innerText = formatSimple(totalE - totalS) + " F";
         }
 
-        async function deleteTx(id) { if(prompt("PASS ADMIN?") === ADMIN_PASS) { await fetch(FIREBASE_URL.replace('.json', '/') + id + '.json', { method: 'DELETE' }); fetchFirebase(); } }
-
-        function setupYears() {
-            const s = document.getElementById('filterYear');
-            for(let y=2000; y<=2200; y++){
-                let o = document.createElement('option'); o.value=y; o.text="EXERCICE "+y;
-                if(y==new Date().getFullYear()) o.selected=true;
-                s.add(o);
-            }
-            updateDocPrefix();
+        function openModal() { document.getElementById('docPrefix').innerText = document.getElementById('filtreAnnee').value.slice(-2); document.getElementById('docDate').value = new Date().toISOString().split('T')[0]; document.getElementById('lignesDoc').innerHTML = ''; ajouterLigne(); document.getElementById('modalDoc').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('modalDoc').classList.add('hidden'); }
+        
+        function ajouterLigne() { 
+            const tr = document.createElement('tr'); tr.className="border-b"; const cat = CATALOGUES[currentStr];
+            let artHtml = `<select onchange="calcTotal()" class="w-full p-2 i-prod outline-none font-bold bg-slate-50 rounded"><option value="">-- Article --</option>${Object.keys(cat).map(p => `<option value="${p}">${p}</option>`).join('')}</select>`; 
+            tr.innerHTML=`<td class="py-2">${artHtml}</td><td><input type="number" value="1" onchange="calcTotal()" class="w-full text-center i-qty outline-none font-bold"></td><td><input type="number" placeholder="0" oninput="calcTotal()" class="w-full text-right i-price-custom outline-none font-bold px-2"></td><td class="text-right font-black i-total-ligne">0</td><td class="text-center cursor-pointer text-red-500 font-black" onclick="this.parentElement.remove();calcTotal()">✕</td>`; 
+            document.getElementById('lignesDoc').appendChild(tr); 
         }
         
-        setupYears();
-        document.getElementById('f_date').valueAsDate = new Date();
-        fetchFirebase();
+        function calcTotal() { 
+            let totHt = 0; const cat = CATALOGUES[currentStr];
+            document.querySelectorAll('#lignesDoc tr').forEach(tr => { 
+                const q = Number(tr.querySelector('.i-qty').value) || 0; const sel = tr.querySelector('.i-prod').value; 
+                let pV = cat[sel] ? cat[sel][0] : 0; tr.querySelector('.i-price-custom').value = pV;
+                let lineHT = q * pV; tr.querySelector('.i-total-ligne').innerText = formatSimple(lineHT); totHt += lineHT; 
+            }); 
+            let tva = totHt * 0.18; document.getElementById('stHT').innerText = formatSimple(totHt) + " F"; 
+            document.getElementById('stTVA').innerText = formatSimple(tva) + " F"; document.getElementById('stTTC').innerText = formatSimple(totHt + tva) + " F"; 
+        }
+        
+        async function validerTripleDoc() { 
+            const cl = document.getElementById('docClient').value; const nV = document.getElementById('docNum').value; const dV = document.getElementById('docDate').value; 
+            if(!cl || nV.length < 4 || !dV) return alert("Vérifiez le client, le numéro et la date"); 
+            const iV = []; const iA = []; let htV = 0; let htA = 0; const cat = CATALOGUES[currentStr];
+            document.querySelectorAll('#lignesDoc tr').forEach(tr => { 
+                const q = Number(tr.querySelector('.i-qty').value) || 0; let name = tr.querySelector('.i-prod').value; 
+                let pV = cat[name] ? cat[name][0] : 0; let pA = cat[name] ? cat[name][1] : pV; 
+                if(name && q > 0) { iV.push({name, qty:q, pu:pV}); iA.push({name, qty:q, pu:pA}); htV += (pV*q); htA += (pA*q); } 
+            }); 
+            const num = document.getElementById('docPrefix').innerText + nV; 
+            const bl = {date:dV, type:'BL', num:"BL"+num, client:cl, items:iV, totalHT:htV, tva:htV*0.18, totalTTC:htV*1.18, structure:currentStr}; 
+            await fetch(CONFIG[currentStr].db, { method:'POST', body:JSON.stringify(bl) }); 
+            await fetch(CONFIG[currentStr].db, { method:'POST', body:JSON.stringify({date:dV, type:'FP', num:"FP"+num, client:cl, items:iV, totalHT:htV, tva:htV*0.18, totalTTC:htV*1.18, isCompte:false, structure:currentStr}) }); 
+            await fetch(CONFIG[currentStr].db, { method:'POST', body:JSON.stringify({date:dV, type:'FP', num:"FP"+num, client:cl, items:iA, totalHT:htA, tva:htA*0.18, totalTTC:htA*1.18, isCompte:true, structure:currentStr}) }); 
+            reprintPDF(bl); closeModal(); fetchData(); 
+        }
+
+        function openCharges() { document.getElementById('chargeDate').value = new Date().toISOString().split('T')[0]; document.getElementById('chargeLabel').value = ''; document.getElementById('chargeMontant').value = ''; document.getElementById('modalCharges').classList.remove('hidden'); }
+        async function validerCharge() { const date = document.getElementById('chargeDate').value; const label = document.getElementById('chargeLabel').value; const montant = Number(document.getElementById('chargeMontant').value) || 0; if(!date || !label || montant <= 0) return alert("Veuillez remplir tous les champs"); const data = { date, type: 'CHG', num: 'CHG-'+Date.now().toString().slice(-4), client: label, totalTTC: montant }; await fetch(CONFIG[currentStr].db, { method:'POST', body:JSON.stringify(data) }); document.getElementById('modalCharges').classList.add('hidden'); fetchData(); }
+        
+        function reprintPDF(data) { 
+            const { jsPDF } = window.jspdf; const doc = new jsPDF(); const strID = data.structure || currentStr; const headerColor = CONFIG[strID].pdfHeader; 
+            let cY = 60; let label = data.type === 'BL' ? "BON DE LIVRAISON" : (data.isCompte ? "FACTURE PROFORMA DE COMPTE" : "FACTURE PROFORMA"); 
+            doc.setTextColor(0,0,0); doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.text(label, 105, cY, {align:'center'}); 
+            cY += 15; doc.setFontSize(10); doc.text("STRUCTURE : " + CONFIG[strID].title, 20, cY); doc.text("NUMERO : " + data.num, 20, cY + 6); doc.text("CLIENT : " + data.client.toUpperCase(), 190, cY, {align:'right'}); 
+            doc.setFont("helvetica", "normal"); doc.text("DATE : " + data.date, 190, cY + 6, {align:'right'}); 
+            doc.setDrawColor(headerColor[0], headerColor[1], headerColor[2]); doc.line(20, cY + 12, 190, cY + 12); 
+            doc.autoTable({ startY: cY + 18, head: [['Désignation', 'Qté', 'P.U HT', 'Total HT']], body: data.items.map(i => [i.name, i.qty, formatSimple(i.pu), formatSimple(i.qty * i.pu)]), theme: 'grid', headStyles: { fillColor: headerColor, textColor: [255, 255, 255] } }); 
+            let fY = doc.lastAutoTable.finalY + 10; doc.setFont("helvetica", "bold"); doc.text("TOTAL HORS TAXE :", 120, fY); doc.text(formatSimple(data.totalHT) + " F", 190, fY, {align:'right'}); 
+            doc.setFont("helvetica", "normal"); doc.text("TVA (18%) :", 120, fY + 7); doc.text(formatSimple(data.tva) + " F", 190, fY + 7, {align:'right'}); 
+            doc.setFontSize(12); doc.setFont("helvetica", "bold"); doc.text("TOTAL TTC :", 120, fY + 15); doc.text(formatSimple(data.totalTTC) + " F CFA", 190, fY + 15, {align:'right'}); doc.save(data.num + ".pdf"); 
+        }
+
+        function openEncaissement() { 
+            const bls = db.filter(d => d.type === 'BL').filter(bl => { 
+                const p = db.filter(e => e.type === 'ENC' && e.bl_ref === bl.num).reduce((s, e) => s + (Number(e.totalTTC) || 0), 0); 
+                return (Number(bl.totalTTC) - p) > 0; 
+            }); 
+            if(bls.length === 0) return alert("Aucun Bon de Livraison n'est en attente d'encaissement.");
+            const sel = document.getElementById('selectBL'); sel.innerHTML = '<option value="">-- Choisir BL --</option>'; 
+            bls.forEach(bl => { 
+                const p = db.filter(e => e.type === 'ENC' && e.bl_ref === bl.num).reduce((s, e) => s + (Number(e.totalTTC) || 0), 0); 
+                sel.innerHTML += `<option value="${bl.num}" data-reste="${Number(bl.totalTTC)-p}" data-client="${bl.client}">${bl.num} - ${bl.client}</option>`; 
+            }); 
+            document.getElementById('modalEncaissement').classList.remove('hidden'); 
+        }
+        
+        function selectBLChange() { const sel = document.getElementById('selectBL'); const opt = sel.options[sel.selectedIndex]; if(!sel.value) return; document.getElementById('detailsBL').classList.remove('hidden'); document.getElementById('resteDuLabel').innerText = formatSimple(opt.dataset.reste) + " F"; document.getElementById('montantEncaisse').value = opt.dataset.reste; }
+        async function validerEncaissement() { const sel = document.getElementById('selectBL'); const opt = sel.options[sel.selectedIndex]; const m = Number(document.getElementById('montantEncaisse').value) || 0; if(m <= 0 || m > Number(opt.dataset.reste)) return alert("Invalide"); await fetch(CONFIG[currentStr].db, { method:'POST', body:JSON.stringify({date:new Date().toISOString().split('T')[0], type:'ENC', num:"E-"+opt.value, bl_ref:opt.value, client:opt.dataset.client, totalTTC:m}) }); document.getElementById('modalEncaissement').classList.add('hidden'); fetchData(); }
+        function switchView(v) { document.getElementById('view-tresorerie').classList.toggle('hidden', v !== 'tresorerie'); document.getElementById('view-archives').classList.toggle('hidden', v !== 'archives'); }
+        async function deleteRow(id) { if(confirm("Supprimer ?")) { await fetch(CONFIG[currentStr].db.replace('.json', '/') + id + '.json', { method: 'DELETE' }); fetchData(); } }
+        const sY = document.getElementById('filtreAnnee'); for(let y=2024; y<=2030; y++) { let o = document.createElement('option'); o.value=y; o.text=y; if(y==2026) o.selected=true; sY.add(o); }
+        fetchData();
     </script>
 </body>
 </html>
-
