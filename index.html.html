@@ -88,6 +88,7 @@
                     <tbody id="tableTreso" class="divide-y text-sm font-bold"></tbody>
                 </table>
             </div>
+
             <div id="view-archives" class="hidden bg-white rounded-xl shadow overflow-hidden">
                 <table class="w-full text-left">
                     <thead class="bg-slate-700 text-white text-[10px] uppercase font-bold">
@@ -96,10 +97,21 @@
                     <tbody id="tableArchives" class="divide-y text-sm font-bold"></tbody>
                 </table>
             </div>
+
             <div id="view-logs" class="hidden bg-white rounded-xl shadow overflow-hidden">
-                <div class="p-4 bg-slate-100 border-b flex justify-between items-center">
+                <div class="p-4 bg-slate-100 border-b flex flex-wrap justify-between items-center gap-4">
                     <span class="font-black text-[10px] uppercase">Journal d'audit - Actions Agents</span>
-                    <button onclick="telechargerLogsPDF()" class="bg-black text-white px-4 py-1 rounded text-[10px] font-bold uppercase italic">Télécharger PDF</button>
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-1">
+                            <label class="text-[9px] font-bold uppercase text-slate-500">Du</label>
+                            <input type="date" id="logDateDebut" class="border p-1 rounded text-xs font-bold outline-none">
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <label class="text-[9px] font-bold uppercase text-slate-500">Au</label>
+                            <input type="date" id="logDateFin" class="border p-1 rounded text-xs font-bold outline-none">
+                        </div>
+                        <button onclick="telechargerLogsPDF()" class="bg-black text-white px-4 py-1 rounded text-[10px] font-bold uppercase italic hover:bg-slate-800">Télécharger PDF</button>
+                    </div>
                 </div>
                 <table class="w-full text-left">
                     <thead class="bg-slate-800 text-white text-[10px] uppercase font-bold">
@@ -157,8 +169,8 @@
     <div id="modalEncaissement" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4 z-[60]"><div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden"><div id="encaissementHeader" class="p-6 bg-sky-600 text-white flex justify-between items-center"><h2 class="text-xl font-black uppercase italic">Versement</h2><button onclick="document.getElementById('modalEncaissement').classList.add('hidden')" class="text-2xl font-black">&times;</button></div><div class="p-8"><label class="text-[10px] font-black text-slate-400 uppercase">Sélectionner BL</label><select id="selectBL" onchange="selectBLChange()" class="w-full border-2 p-4 rounded-xl font-bold mt-2 outline-none"></select><div id="detailsBL" class="mt-6 p-6 bg-slate-50 rounded-2xl hidden border-2 border-dashed border-sky-200 text-center"><p class="text-[10px] uppercase text-red-500 font-bold mb-1">Reste à payer</p><p id="resteDuLabel" class="text-4xl font-black text-slate-900 mb-6">0 F</p><input type="number" id="montantEncaisse" class="w-full border-b-2 border-sky-600 p-2 text-2xl font-black text-center outline-none"></div><button onclick="validerEncaissement()" class="w-full bg-sky-600 text-white p-5 rounded-xl font-black uppercase mt-8 shadow-lg">Valider</button></div></div></div>
 
     <script>
-        // --- SÉCURITÉ & LOGS ---
-        const AGENTS_LIST = { "PDTCISSE": "Cisseadama", "PDTACISSE": "Cissekalilou", "AGS001": "Sylvieecf", "AGP002": "Padreecf" };
+        // --- A. SÉCURITÉ ET CONNEXION ---
+        const AGENTS_LIST = { "PDTCISSE": "Cisseadama", "PDTACISSE": "Cissekalilou", "SYLVIE": "Sylvieecf", "PADRE": "Padreecf" };
         let connectedAgent = null; let inactivityTimeout; let logsData = [];
 
         function verifierConnexion() {
@@ -170,25 +182,35 @@
                 document.getElementById('appContent').classList.remove('hidden');
                 document.getElementById('infoAgent').innerText = "Agent Connecté : " + id;
                 logAction("CONNEXION", "Accès à l'application");
-                resetInactivityTimer(); fetchData();
+                resetInactivityTimer();
+                fetchData();
             } else { document.getElementById('loginError').classList.remove('hidden'); }
         }
 
         function deconnexion() {
             logAction("DÉCONNEXION", "Fermeture de session");
-            connectedAgent = null; document.getElementById('loginScreen').classList.remove('hidden');
-            document.getElementById('appContent').classList.add('hidden'); document.getElementById('agentPass').value = "";
+            connectedAgent = null;
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('appContent').classList.add('hidden');
+            document.getElementById('agentPass').value = "";
             clearTimeout(inactivityTimeout);
         }
 
         function resetInactivityTimer() {
             if (!connectedAgent) return;
             clearTimeout(inactivityTimeout);
-            inactivityTimeout = setTimeout(() => { alert("Session expirée (15 min)"); deconnexion(); }, 15 * 60 * 1000);
+            inactivityTimeout = setTimeout(() => { alert("Session expirée (15 min d'inactivité)"); deconnexion(); }, 15 * 60 * 1000);
         }
 
+        // --- B. GESTION DES LOGS (JOURNAL D'AUDIT) ---
         async function logAction(type, detail) {
-            const logEntry = { timestamp: new Date().toLocaleString('fr-FR'), agent: connectedAgent, action: type, details: detail, structure: currentStr };
+            const logEntry = { 
+                timestamp: new Date().toLocaleString('fr-FR'), 
+                agent: connectedAgent, 
+                action: type, 
+                details: detail, 
+                structure: currentStr 
+            };
             await fetch("https://ecfcommerce-b3893-default-rtdb.firebaseio.com/logs_v3.json", { method: 'POST', body: JSON.stringify(logEntry) });
             fetchLogs();
         }
@@ -206,23 +228,37 @@
 
         function telechargerLogsPDF() {
             const { jsPDF } = window.jspdf; const doc = new jsPDF();
-            doc.setTextColor(0,0,0); doc.setFont("helvetica", "bold"); doc.text("JOURNAL D'AUDIT - GROUPE ECF", 105, 15, {align:'center'});
+            const dateDebut = document.getElementById('logDateDebut').value;
+            const dateFin = document.getElementById('logDateFin').value;
+            let filtrés = logsData;
+
+            if (dateDebut || dateFin) {
+                filtrés = logsData.filter(l => {
+                    const d = l.timestamp.split(',')[0].split('/');
+                    const iso = `${d[2]}-${d[1]}-${d[0]}`;
+                    if (dateDebut && iso < dateDebut) return false;
+                    if (dateFin && iso > dateFin) return false;
+                    return true;
+                });
+            }
+
+            doc.setTextColor(0,0,0); doc.setFont("helvetica", "bold"); doc.text("JOURNAL ACTIONS - GROUPE ECF", 105, 15, {align:'center'});
             doc.autoTable({
                 startY: 25, head: [['Date/Heure', 'Agent', 'Action', 'Détails']],
-                body: logsData.map(l => [l.timestamp, l.agent, l.action, l.details]),
-                headStyles: { fillColor: [0, 0, 0] }, theme: 'grid', styles: { fontSize: 8 }
+                body: filtrés.map(l => [l.timestamp, l.agent, l.action, l.details]),
+                headStyles: { fillColor: [0, 0, 0] }, theme: 'grid', styles: { fontSize: 7 }
             });
-            doc.save("Journal_Actions_ECF.pdf");
+            doc.save(`Audit_${dateDebut || 'complet'}.pdf`);
         }
 
-        // --- CONFIGURATION ---
+        // --- C. CONFIGURATION DES FILIALES ---
         const CONFIG = {
             BIOMED: { title: "ECF BIOMEDICAUX", db: "https://ecfcommerce-b3893-default-rtdb.firebaseio.com/biomed_v3.json", color: "bg-blue-900", btn: "bg-red-600" },
             COMMERCE: { title: "ECF COMMERCE GENERAL", db: "https://ecfcommerce-b3893-default-rtdb.firebaseio.com/commerce_v1.json", color: "bg-emerald-900", btn: "bg-emerald-600" }
         };
 
         const CATALOGUES = {
-            BIOMED: { "Désodorisant 400 ml (carton)": [35000, 26000], "Anios clean excel D (bidon)": [8695, 4700], "Stéranios 2% bidon 5 L": [8880, 4800], "Surfanos": [65000, 4700], "Aseptanios AD 5 L": [8880, 4800], "Acide muriatique": [10175, 5500], "Grésil (carton)": [3145, 1700], "Gant de ménage": [8500, 5500], "Serpillères": [1500, 800], "Raclettes": [2000, 1000], "Pelle à manche": [3885, 2100], "Balai à manche": [2000, 1000], "Balai à tête de loup": [2000, 1000], "Brosse à manche": [4070, 2200], "Brouettes": [27750, 15000], "Bottes pour les manœuvres": [10175, 5500], "Eponges végétales": [600, 550], "OMO sachet 1 Kg (sacs)": [17000, 13000], "Bras de robos": [10730, 5800], "Sachet de poubelle noir 100L (Paquet de 10)": [2000, 1300], "Sachet de poubelle bleu 100L (Paquet de 10)": [2000, 1300], "Sachet de poubelle noir 50L (Paquet de 10)": [1600, 850], "Sachet de poubelle bleu 50L (Paquet de 10)": [1600, 850] },
+            BIOMED: { "Désodorisant 400 ml (carton)": [35000, 26000], "Anios clean excel D (bidon)": [8695, 4700], "Stéranios 2% bidon 5 L": [8880, 4800], "Surfanos": [65000, 4700], "Aseptanios AD 5 L": [8880, 4800], "Acide muriatique": [10175, 5500], "Grésil (carton)": [3145, 1700], "Gant de ménage": [8500, 5500], "Serpillères": [1500, 800], "Raclettes": [2000, 1000], "Pelle à manche": [3885, 2100], "Balai à manche": [2000, 1000], "Balai à tête de loup": [2000, 1000], "Brosse à manche": [4070, 2200], "Brouettes": [27750, 15000], "Bottes pour les manœuvres": [10175, 5500], "Eponges végétales": [600, 550], "OMO sachet 1 Kg (sacs)": [17000, 13000], "Bras de robos": [10730, 5800], "Sachet de poubelle noir 100L": [2000, 1300], "Sachet de poubelle bleu 100L": [2000, 1300], "Sachet de poubelle noir 50L": [1600, 850], "Sachet de poubelle bleu 50L": [1600, 850] },
             COMMERCE: { "NASCO SPLIT 2CV/R-410": [350000, 235000], "NASCO SPLIT 1,5CV/R-410": [250000, 195000], "NASCO SPLIT 1CV/R-410": [200000, 155000] }
         };
 
@@ -236,9 +272,11 @@
             document.getElementById('btnNouveau').className = `${c.btn} text-white px-4 py-2 rounded font-black text-[10px] uppercase italic shadow-lg`;
             document.getElementById('modalHeader').className = `p-6 ${c.btn} text-white flex justify-between items-center`;
             document.getElementById('btnValiderDoc').className = `col-span-2 ${c.btn} text-white p-5 rounded-xl font-black uppercase tracking-widest shadow-xl`;
-            logAction("CHANGEMENT FILIALE", currentStr); fetchData();
+            logAction("CHANGEMENT FILIALE", currentStr);
+            fetchData();
         }
 
+        // --- D. FONCTIONS CORE ---
         function formatSimple(n) {
             let val = Math.round(Math.abs(Number(n) || 0)).toString(); let res = ""; let count = 0;
             for (let i = val.length - 1; i >= 0; i--) { res = val[i] + res; count++; if (count === 3 && i !== 0) { res = " " + res; count = 0; } }
@@ -247,36 +285,10 @@
 
         async function fetchData() { 
             try { 
-                const res = await fetch(CONFIG[currentStr].db); 
-                const data = await res.json(); 
+                const res = await fetch(CONFIG[currentStr].db); const data = await res.json(); 
                 db = data ? Object.keys(data).map(k => ({id: k, ...data[k]})) : []; 
-                render(); fetchLogs(); 
+                render(); 
             } catch (e) { console.error(e); } 
-        }
-
-        function updateChart(filteredData) {
-            const ctx = document.getElementById('chartTreso').getContext('2d');
-            const dailyData = {};
-            filteredData.forEach(r => {
-                const day = r.date.split('-')[2];
-                if (!dailyData[day]) dailyData[day] = { e: 0, s: 0 };
-                const mont = Number(r.totalTTC) || 0;
-                if (r.type === 'ENC') dailyData[day].e += mont;
-                if ((r.type === 'FP' && r.isCompte) || r.type === 'CHG') dailyData[day].s += mont;
-            });
-            const labels = Object.keys(dailyData).sort();
-            if (myChart) myChart.destroy();
-            myChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels.map(l => "J-" + l),
-                    datasets: [
-                        { label: 'Recettes', data: labels.map(l => dailyData[l].e), backgroundColor: '#10b981', borderRadius: 4 },
-                        { label: 'Sorties', data: labels.map(l => dailyData[l].s), backgroundColor: '#ef4444', borderRadius: 4 }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
         }
 
         function render() {
@@ -298,14 +310,17 @@
             document.getElementById('beneficeNet').innerText = formatSimple(totalE - totalS) + " F";
         }
 
+        // --- E. ACTIONS ---
         function openModal() { document.getElementById('docPrefix').innerText = document.getElementById('filtreAnnee').value.slice(-2); document.getElementById('docDate').value = new Date().toISOString().split('T')[0]; document.getElementById('lignesDoc').innerHTML = ''; ajouterLigne(); document.getElementById('modalDoc').classList.remove('hidden'); }
         function closeModal() { document.getElementById('modalDoc').classList.add('hidden'); }
+        
         function ajouterLigne() { 
             const tr = document.createElement('tr'); tr.className="border-b"; const cat = CATALOGUES[currentStr];
             let artHtml = `<select onchange="calcTotal()" class="w-full p-2 i-prod outline-none font-bold bg-slate-50 rounded"><option value="">-- Article --</option>${Object.keys(cat).map(p => `<option value="${p}">${p}</option>`).join('')}</select>`; 
             tr.innerHTML=`<td class="py-2">${artHtml}</td><td><input type="number" value="1" onchange="calcTotal()" class="w-full text-center i-qty outline-none font-bold"></td><td><input type="number" placeholder="0" oninput="calcTotal()" class="w-full text-right i-price-custom outline-none font-bold px-2"></td><td class="text-right font-black i-total-ligne">0</td><td class="text-center cursor-pointer text-red-500 font-black" onclick="this.parentElement.remove();calcTotal()">✕</td>`; 
             document.getElementById('lignesDoc').appendChild(tr); 
         }
+
         function calcTotal() { 
             let totHt = 0; const cat = CATALOGUES[currentStr];
             document.querySelectorAll('#lignesDoc tr').forEach(tr => { 
@@ -331,10 +346,10 @@
             await fetch(CONFIG[currentStr].db, { method:'POST', body:JSON.stringify(bl) }); 
             await fetch(CONFIG[currentStr].db, { method:'POST', body:JSON.stringify({date:dV, type:'FP', num:"FP"+num, client:cl, items:iV, totalHT:htV, tva:htV*0.18, totalTTC:htV*1.18, isCompte:false, structure:currentStr}) }); 
             await fetch(CONFIG[currentStr].db, { method:'POST', body:JSON.stringify({date:dV, type:'FP', num:"FP"+num, client:cl, items:iA, totalHT:htA, tva:htA*0.18, totalTTC:htA*1.18, isCompte:true, structure:currentStr}) }); 
-            logAction("CRÉATION TRIPLE DOC", "Référence " + num); reprintPDF(bl); closeModal(); fetchData(); 
+            logAction("TRIPLE DOC", "Réf: " + num); reprintPDF(bl); closeModal(); fetchData(); 
         }
 
-        function openCharges() { document.getElementById('chargeDate').value = new Date().toISOString().split('T')[0]; document.getElementById('chargeLabel').value = ''; document.getElementById('chargeMontant').value = ''; document.getElementById('modalCharges').classList.remove('hidden'); }
+        function openCharges() { document.getElementById('chargeDate').value = new Date().toISOString().split('T')[0]; document.getElementById('modalCharges').classList.remove('hidden'); }
         
         async function validerCharge() { 
             const date = document.getElementById('chargeDate').value; const label = document.getElementById('chargeLabel').value; 
@@ -343,77 +358,75 @@
             const data = { date, type: 'CHG', num: 'CHG-'+Date.now().toString().slice(-4), client: label, totalTTC: montant }; 
             await fetch(CONFIG[currentStr].db, { method:'POST', body:JSON.stringify(data) }); 
             logAction("CHARGE", label + " : " + montant + " F");
-            document.getElementById('modalCharges').classList.add('hidden'); fetchData(); // Actualisation immédiate
+            document.getElementById('modalCharges').classList.add('hidden'); fetchData(); 
         }
 
-        function genererRapportCharges() {
-            const m = document.getElementById('filtreMois').value; 
-            const y = document.getElementById('filtreAnnee').value;
-            const structureNom = CONFIG[currentStr].title; // Récupère le nom de la filiale actuelle
-            const agentNom = connectedAgent; // Récupère l'ID de l'agent connecté
-            
-            const charges = db.filter(r => r.type === 'CHG' && r.date.startsWith(y) && (m === '' || r.date.split('-')[1] === m));
-            
-            if(charges.length === 0) return alert("Aucune charge trouvée pour cette période.");
-            
-            const { jsPDF } = window.jspdf; 
-            const doc = new jsPDF();
-            
-            // Configuration Noir & Blanc
-            doc.setTextColor(0,0,0); 
-            
-            // Titre Principal
-            doc.setFont("helvetica", "bold"); 
-            doc.setFontSize(16);
-            doc.text("RAPPORT MENSUEL DES CHARGES", 105, 20, {align:'center'});
-            
-            // Informations de contexte
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "normal");
-            doc.text("STRUCTURE : " + structureNom, 20, 35);
-            doc.text("GÉNÉRÉ PAR : " + agentNom, 20, 42);
-            doc.text("PÉRIODE : " + (m ? m + "/" + y : y), 190, 35, {align:'right'});
-            doc.text("DATE ÉDITION : " + new Date().toLocaleDateString('fr-FR'), 190, 42, {align:'right'});
-            
-            // Tableau des charges
-            doc.autoTable({ 
-                startY: 50, 
-                head: [['Date', 'Référence', 'Libellé de la Charge', 'Montant']], 
-                body: charges.map(c => [
-                    c.date, 
-                    c.num, 
-                    c.client.toUpperCase(), 
-                    formatSimple(c.totalTTC) + " F"
-                ]),
-                headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255] }, // En-tête Noir, Texte Blanc
-                theme: 'grid',
-                styles: { textColor: [0, 0, 0], lineColor: [0, 0, 0] } // Bordures et texte noirs
-            });
-            
-            // Total au bas du tableau
-            const totalMontant = charges.reduce((sum, c) => sum + (Number(c.totalTTC) || 0), 0);
-            let finalY = doc.lastAutoTable.finalY + 10;
-            doc.setFont("helvetica", "bold");
-            doc.text("TOTAL GÉNÉRAL DES CHARGES : " + formatSimple(totalMontant) + " F CFA", 190, finalY, {align:'right'});
-
-            logAction("PDF RAPPORT", "Rapport charges généré pour " + structureNom);
-            doc.save("Rapport_Charges_" + currentStr + "_" + y + ".pdf");
-        }
-
+        // --- F. GESTION PDF NOIR STRICT ---
         function reprintPDF(data) { 
             const { jsPDF } = window.jspdf; const doc = new jsPDF(); 
             doc.setTextColor(0,0,0); doc.setFont("helvetica", "bold"); doc.setFontSize(16); 
             let label = data.type === 'BL' ? "BON DE LIVRAISON" : (data.isCompte ? "FACTURE PROFORMA DE COMPTE" : "FACTURE PROFORMA"); 
-            doc.text(label, 105, 40, {align:'center'}); 
-            doc.setFontSize(10); doc.text("STRUCTURE : " + CONFIG[data.structure || currentStr].title, 20, 60); 
-            doc.text("NUMERO : " + data.num, 20, 66); doc.text("CLIENT : " + data.client.toUpperCase(), 190, 60, {align:'right'}); 
-            doc.text("DATE : " + data.date, 190, 66, {align:'right'}); 
-            doc.autoTable({ startY: 75, head: [['Désignation', 'Qté', 'P.U HT', 'Total HT']], body: data.items.map(i => [i.name, i.qty, formatSimple(i.pu), formatSimple(i.qty * i.pu)]), theme: 'grid', headStyles: { fillColor: [0, 0, 0] } }); 
+            doc.text(label, 105, 30, {align:'center'}); 
+            doc.setFontSize(10); doc.text("STRUCTURE : " + CONFIG[data.structure || currentStr].title, 20, 50); 
+            doc.text("NUMERO : " + data.num, 20, 56); doc.text("CLIENT : " + data.client.toUpperCase(), 190, 50, {align:'right'}); 
+            doc.text("DATE : " + data.date, 190, 56, {align:'right'}); 
+            doc.autoTable({ startY: 65, head: [['Désignation', 'Qté', 'P.U HT', 'Total HT']], body: data.items.map(i => [i.name, i.qty, formatSimple(i.pu), formatSimple(i.qty * i.pu)]), theme: 'grid', headStyles: { fillColor: [0, 0, 0] } }); 
             let fY = doc.lastAutoTable.finalY + 10; 
             doc.text("TOTAL HT : " + formatSimple(data.totalHT) + " F", 190, fY, {align:'right'}); 
             doc.text("TVA (18%) : " + formatSimple(data.tva) + " F", 190, fY + 7, {align:'right'}); 
             doc.setFontSize(12); doc.text("TOTAL TTC : " + formatSimple(data.totalTTC) + " F CFA", 190, fY + 15, {align:'right'}); 
             doc.save(data.num + ".pdf"); 
+        }
+
+        function genererRapportCharges() {
+            const m = document.getElementById('filtreMois').value; const y = document.getElementById('filtreAnnee').value;
+            const charges = db.filter(r => r.type === 'CHG' && r.date.startsWith(y) && (m === '' || r.date.split('-')[1] === m));
+            if(charges.length === 0) return alert("Aucune charge trouvée.");
+            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            doc.setTextColor(0,0,0); doc.setFont("helvetica", "bold"); doc.text("RAPPORT DES CHARGES", 105, 20, {align:'center'});
+            doc.setFontSize(10); doc.text("STRUCTURE : " + CONFIG[currentStr].title, 20, 35);
+            doc.text("GÉNÉRÉ PAR : " + connectedAgent, 20, 42);
+            doc.autoTable({ startY: 50, head: [['Date', 'Réf', 'Libellé', 'Montant']], body: charges.map(c => [c.date, c.num, c.client, formatSimple(c.totalTTC) + " F"]), headStyles: { fillColor: [0, 0, 0] }, theme: 'grid' });
+            doc.save("Charges.pdf");
+        }
+
+        // --- G. GRAPHIQUE ET UTILITAIRES ---
+        function updateChart(filteredData) {
+            const ctx = document.getElementById('chartTreso').getContext('2d');
+            const dailyData = {};
+            filteredData.forEach(r => {
+                const day = r.date.split('-')[2];
+                if (!dailyData[day]) dailyData[day] = { e: 0, s: 0 };
+                const mont = Number(r.totalTTC) || 0;
+                if (r.type === 'ENC') dailyData[day].e += mont;
+                if ((r.type === 'FP' && r.isCompte) || r.type === 'CHG') dailyData[day].s += mont;
+            });
+            const labels = Object.keys(dailyData).sort();
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels.map(l => "J-" + l),
+                    datasets: [
+                        { label: 'Recettes', data: labels.map(l => dailyData[l].e), backgroundColor: '#10b981', borderRadius: 4 },
+                        { label: 'Sorties', data: labels.map(l => dailyData[l].s), backgroundColor: '#ef4444', borderRadius: 4 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function switchView(v) { 
+            document.getElementById('view-tresorerie').classList.toggle('hidden', v !== 'tresorerie'); 
+            document.getElementById('view-archives').classList.toggle('hidden', v !== 'archives'); 
+            document.getElementById('view-logs').classList.toggle('hidden', v !== 'logs'); 
+        }
+
+        async function deleteRow(id, num) { 
+            if(confirm("Supprimer " + num + " ?")) { 
+                await fetch(CONFIG[currentStr].db.replace('.json', '/') + id + '.json', { method: 'DELETE' }); 
+                logAction("SUPPRESSION", "Référence : " + num); fetchData(); 
+            } 
         }
 
         function openEncaissement() { 
@@ -428,25 +441,14 @@
             }); 
             document.getElementById('modalEncaissement').classList.remove('hidden'); 
         }
+
         function selectBLChange() { const sel = document.getElementById('selectBL'); const opt = sel.options[sel.selectedIndex]; if(!sel.value) return; document.getElementById('detailsBL').classList.remove('hidden'); document.getElementById('resteDuLabel').innerText = formatSimple(opt.dataset.reste) + " F"; document.getElementById('montantEncaisse').value = opt.dataset.reste; }
+        
         async function validerEncaissement() { 
             const sel = document.getElementById('selectBL'); const opt = sel.options[sel.selectedIndex]; const m = Number(document.getElementById('montantEncaisse').value) || 0; 
             if(m <= 0) return; 
             await fetch(CONFIG[currentStr].db, { method:'POST', body:JSON.stringify({date:new Date().toISOString().split('T')[0], type:'ENC', num:"E-"+opt.value, bl_ref:opt.value, client:opt.dataset.client, totalTTC:m}) }); 
             logAction("ENCAISSEMENT", "Sur BL " + opt.value + " : " + m + " F"); document.getElementById('modalEncaissement').classList.add('hidden'); fetchData(); 
-        }
-
-        function switchView(v) { 
-            document.getElementById('view-tresorerie').classList.toggle('hidden', v !== 'tresorerie'); 
-            document.getElementById('view-archives').classList.toggle('hidden', v !== 'archives'); 
-            document.getElementById('view-logs').classList.toggle('hidden', v !== 'logs'); 
-        }
-
-        async function deleteRow(id, num) { 
-            if(confirm("Supprimer " + num + " ?")) { 
-                await fetch(CONFIG[currentStr].db.replace('.json', '/') + id + '.json', { method: 'DELETE' }); 
-                logAction("SUPPRESSION", "Référence : " + num); fetchData(); 
-            } 
         }
 
         const sY = document.getElementById('filtreAnnee'); for(let y=2024; y<=2030; y++) { let o = document.createElement('option'); o.value=y; o.text=y; if(y==2026) o.selected=true; sY.add(o); }
