@@ -361,20 +361,49 @@
             document.getElementById('modalCharges').classList.add('hidden'); fetchData(); 
         }
 
-        // --- F. GESTION PDF NOIR STRICT ---
+        // --- F. GESTION PDF NOIR STRICT (MODIFIÉ POUR BL SANS PRIX ET ESPACEMENT EN-TÊTE) ---
         function reprintPDF(data) { 
-            const { jsPDF } = window.jspdf; const doc = new jsPDF(); 
-            doc.setTextColor(0,0,0); doc.setFont("helvetica", "bold"); doc.setFontSize(16); 
-            let label = data.type === 'BL' ? "BON DE LIVRAISON" : (data.isCompte ? "FACTURE PROFORMA DE COMPTE" : "FACTURE PROFORMA"); 
-            doc.text(label, 105, 30, {align:'center'}); 
-            doc.setFontSize(10); doc.text("STRUCTURE : " + CONFIG[data.structure || currentStr].title, 20, 50); 
-            doc.text("NUMERO : " + data.num, 20, 56); doc.text("CLIENT : " + data.client.toUpperCase(), 190, 50, {align:'right'}); 
-            doc.text("DATE : " + data.date, 190, 56, {align:'right'}); 
-            doc.autoTable({ startY: 65, head: [['Désignation', 'Qté', 'P.U HT', 'Total HT']], body: data.items.map(i => [i.name, i.qty, formatSimple(i.pu), formatSimple(i.qty * i.pu)]), theme: 'grid', headStyles: { fillColor: [0, 0, 0] } }); 
-            let fY = doc.lastAutoTable.finalY + 10; 
-            doc.text("TOTAL HT : " + formatSimple(data.totalHT) + " F", 190, fY, {align:'right'}); 
-            doc.text("TVA (18%) : " + formatSimple(data.tva) + " F", 190, fY + 7, {align:'right'}); 
-            doc.setFontSize(12); doc.text("TOTAL TTC : " + formatSimple(data.totalTTC) + " F CFA", 190, fY + 15, {align:'right'}); 
+            const { jsPDF } = window.jspdf; 
+            const doc = new jsPDF(); 
+            
+            doc.setTextColor(0,0,0); 
+            doc.setFont("helvetica", "bold"); 
+            
+            let isBL = (data.type === 'BL');
+            let label = isBL ? "BON DE LIVRAISON" : (data.isCompte ? "FACTURE PROFORMA DE COMPTE" : "FACTURE PROFORMA"); 
+            
+            // ESPACE CONVENABLE EN HAUT (Début à 70 pour l'en-tête physique)
+            doc.setFontSize(16);
+            doc.text(label, 105, 75, {align:'center'}); 
+            
+            doc.setFontSize(10); 
+            doc.text("STRUCTURE : " + CONFIG[data.structure || currentStr].title, 20, 90); 
+            doc.text("NUMERO : " + data.num, 20, 96); 
+            doc.text("CLIENT : " + data.client.toUpperCase(), 190, 90, {align:'right'}); 
+            doc.text("DATE : " + data.date, 190, 96, {align:'right'}); 
+
+            // CONFIGURATION DES COLONNES SELON LE TYPE DE DOCUMENT
+            let colonnes = isBL ? [['Désignation', 'Quantité']] : [['Désignation', 'Qté', 'P.U HT', 'Total HT']];
+            let corps = isBL ? data.items.map(i => [i.name, i.qty]) : data.items.map(i => [i.name, i.qty, formatSimple(i.pu), formatSimple(i.qty * i.pu)]);
+
+            doc.autoTable({ 
+                startY: 105, 
+                head: colonnes, 
+                body: corps, 
+                theme: 'grid', 
+                headStyles: { fillColor: [0, 0, 0] },
+                margin: { bottom: 60 } // Réserve d'espace en bas pour le pied de page physique
+            }); 
+
+            // AFFICHAGE DES TOTAUX UNIQUEMENT SI CE N'EST PAS UN BL
+            if (!isBL) {
+                let fY = doc.lastAutoTable.finalY + 10; 
+                doc.text("TOTAL HT : " + formatSimple(data.totalHT) + " F", 190, fY, {align:'right'}); 
+                doc.text("TVA (18%) : " + formatSimple(data.tva) + " F", 190, fY + 7, {align:'right'}); 
+                doc.setFontSize(12); 
+                doc.text("TOTAL TTC : " + formatSimple(data.totalTTC) + " F CFA", 190, fY + 15, {align:'right'}); 
+            }
+
             doc.save(data.num + ".pdf"); 
         }
 
